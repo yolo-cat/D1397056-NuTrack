@@ -12,7 +12,6 @@ struct NuTrackDemo03App: App {
     var body: some Scene {
         WindowGroup {
             NewNutritionTrackerView()
-//            DemoView()
         }
     }
 }

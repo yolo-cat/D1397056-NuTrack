@@ -5,6 +5,7 @@
 //  Created by NuTrack on 2024/7/31.
 //
 
+import SwiftUI
 import Foundation
 
 // MARK: - Core Data Models
@@ -109,4 +110,72 @@ struct NutritionData {
         let fatPercent = fat.progress
         return (carbsPercent + proteinPercent + fatPercent) / 3.0
     }
+    
+    /// 計算三大營養素的熱量分佈
+    var macronutrientCaloriesDistribution: (carbs: Int, protein: Int, fat: Int) {
+        let carbsCalories = carbs.current * 4  // 1g 碳水化合物 = 4 卡路里
+        let proteinCalories = protein.current * 4  // 1g 蛋白質 = 4 卡路里
+        let fatCalories = fat.current * 9  // 1g 脂肪 = 9 卡路里
+        return (carbsCalories, proteinCalories, fatCalories)
+    }
+    
+    /// 計算三大營養素的理想熱量分佈百分比
+    var macronutrientPercentages: (carbs: Double, protein: Double, fat: Double) {
+        let distribution = macronutrientCaloriesDistribution
+        let totalMacroCalories = distribution.carbs + distribution.protein + distribution.fat
+        
+        guard totalMacroCalories > 0 else {
+            return (0, 0, 0)
+        }
+        
+        let carbsPercent = Double(distribution.carbs) / Double(totalMacroCalories)
+        let proteinPercent = Double(distribution.protein) / Double(totalMacroCalories)
+        let fatPercent = Double(distribution.fat) / Double(totalMacroCalories)
+        
+        return (carbsPercent, proteinPercent, fatPercent)
+    }
+    
+    /// 獲取營養素攝取狀態
+    var nutritionStatus: NutritionStatus {
+        let carbsStatus: NutrientStatus =  carbs.current >= carbs.goal ? .adequate : .insufficient
+        let proteinStatus: NutrientStatus = protein.current >= protein.goal ? .adequate : .insufficient
+        let fatStatus: NutrientStatus = fat.current >= fat.goal ? .adequate : .insufficient
+        
+        let adequateCount = [carbsStatus, proteinStatus, fatStatus].filter { $0 == .adequate }.count
+        
+        switch adequateCount {
+        case 3: return .excellent
+        case 2: return .good
+        case 1: return .fair
+        default: return .needsImprovement
+        }
+    }
+}
+
+/// 營養攝取狀態
+enum NutritionStatus {
+    case excellent, good, fair, needsImprovement
+    
+    var description: String {
+        switch self {
+        case .excellent: return "營養均衡，表現優秀！"
+        case .good: return "營養攝取良好"
+        case .fair: return "營養攝取尚可"
+        case .needsImprovement: return "需要改善營養攝取"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .excellent: return .green
+        case .good: return .primaryBlue
+        case .fair: return .accentOrange
+        case .needsImprovement: return .red
+        }
+    }
+}
+
+/// 營養素攝取狀態
+enum NutrientStatus {
+    case adequate, insufficient
 }
