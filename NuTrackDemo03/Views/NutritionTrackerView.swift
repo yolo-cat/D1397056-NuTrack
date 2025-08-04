@@ -90,14 +90,14 @@ struct NewNutritionTrackerView: View {
                 }
                 
                 VStack(spacing: 4) {
-                    Text("\(nutritionData.caloriesBurned)")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.carbsColor)
+                    // Text("\(nutritionData.caloriesBurned)")
+                    //     .font(.title2)
+                    //     .fontWeight(.bold)
+                    //     .foregroundColor(.carbsColor)
                     
-                    Text("已燃燒")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    // Text("已燃燒")
+                    //     .font(.caption)
+                    //     .foregroundColor(.secondary)
                 }
                 
                 VStack(spacing: 4) {
