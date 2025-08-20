@@ -9,9 +9,7 @@ import SwiftUI
 
 struct HeaderView: View {
     let username: String
-    let onLogout: () -> Void
-    
-    @State private var showLogoutAlert = false
+    let userManager: SimpleUserManager
     
     var body: some View {
         HStack {
@@ -35,20 +33,8 @@ struct HeaderView: View {
             
             Spacer()
             
-            // User avatar with username (right)
-            Menu {
-                VStack {
-                    Label(username, systemImage: "person.fill")
-                    
-                    Divider()
-                    
-                    Button(action: {
-                        showLogoutAlert = true
-                    }) {
-                        Label("登出", systemImage: "arrow.right.square")
-                    }
-                }
-            } label: {
+            // User avatar with username (right) - NavigationLink to UserProfileView
+            NavigationLink(destination: UserProfileView(userManager: userManager)) {
                 HStack(spacing: 8) {
                     Circle()
                         .fill(Color.primaryBlue)
@@ -74,17 +60,9 @@ struct HeaderView: View {
         .padding(.vertical, 16)
         .background(.ultraThinMaterial)
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        .alert("確認登出", isPresented: $showLogoutAlert) {
-            Button("取消", role: .cancel) { }
-            Button("登出", role: .destructive) {
-                onLogout()
-            }
-        } message: {
-            Text("您確定要登出 NuTrack 嗎？")
-        }
     }
 }
 
 #Preview {
-    HeaderView(username: "Alex Chen", onLogout: {})
+    HeaderView(username: "Alex Chen", userManager: SimpleUserManager())
 }

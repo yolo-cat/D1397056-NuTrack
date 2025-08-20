@@ -14,14 +14,25 @@ class SimpleUserManager: ObservableObject {
     @Published var currentUsername: String = ""
     @Published var isLoading: Bool = false
     
+    // 新增：用戶體重和營養目標
+    @Published var userWeight: Double = 70.0
+    @Published var carbsGoal: Double = 210.0
+    @Published var proteinGoal: Double = 105.0
+    @Published var fatGoal: Double = 63.0
+    
     // UserDefaults 鍵值
     private let userDefaultsKeys = (
         isLoggedIn: "nu_track_is_logged_in",
-        username: "nu_track_username"
+        username: "nu_track_username",
+        userWeight: "nu_track_user_weight",
+        carbsGoal: "nu_track_carbs_goal",
+        proteinGoal: "nu_track_protein_goal",
+        fatGoal: "nu_track_fat_goal"
     )
     
     init() {
         checkStoredLogin()
+        loadUserData()
     }
     
     /// 檢查已儲存的登入狀態
@@ -33,6 +44,31 @@ class SimpleUserManager: ObservableObject {
             DispatchQueue.main.async {
                 self.isLoggedIn = true
                 self.currentUsername = storedUsername
+            }
+        }
+    }
+    
+    /// 載入用戶資料
+    private func loadUserData() {
+        DispatchQueue.main.async {
+            let savedWeight = UserDefaults.standard.double(forKey: self.userDefaultsKeys.userWeight)
+            if savedWeight > 0 {
+                self.userWeight = savedWeight
+            }
+            
+            let savedCarbs = UserDefaults.standard.double(forKey: self.userDefaultsKeys.carbsGoal)
+            if savedCarbs > 0 {
+                self.carbsGoal = savedCarbs
+            }
+            
+            let savedProtein = UserDefaults.standard.double(forKey: self.userDefaultsKeys.proteinGoal)
+            if savedProtein > 0 {
+                self.proteinGoal = savedProtein
+            }
+            
+            let savedFat = UserDefaults.standard.double(forKey: self.userDefaultsKeys.fatGoal)
+            if savedFat > 0 {
+                self.fatGoal = savedFat
             }
         }
     }
@@ -66,12 +102,20 @@ class SimpleUserManager: ObservableObject {
         // 清除 UserDefaults
         UserDefaults.standard.removeObject(forKey: userDefaultsKeys.isLoggedIn)
         UserDefaults.standard.removeObject(forKey: userDefaultsKeys.username)
+        UserDefaults.standard.removeObject(forKey: userDefaultsKeys.userWeight)
+        UserDefaults.standard.removeObject(forKey: userDefaultsKeys.carbsGoal)
+        UserDefaults.standard.removeObject(forKey: userDefaultsKeys.proteinGoal)
+        UserDefaults.standard.removeObject(forKey: userDefaultsKeys.fatGoal)
         
         // 重置狀態
         DispatchQueue.main.async {
             self.isLoggedIn = false
             self.currentUsername = ""
             self.isLoading = false
+            self.userWeight = 70.0
+            self.carbsGoal = 210.0
+            self.proteinGoal = 105.0
+            self.fatGoal = 63.0
         }
     }
     
@@ -85,6 +129,73 @@ class SimpleUserManager: ObservableObject {
         currentUsername = username
         isLoggedIn = true
         isLoading = false
+    }
+    
+    // MARK: - 體重和營養目標管理
+    
+    /// 更新用戶體重
+    /// - Parameter weight: 新的體重（公斤）
+    func updateWeight(_ weight: Double) {
+        guard weight.isValidWeight else { return }
+        
+        DispatchQueue.main.async {
+            self.userWeight = weight
+            UserDefaults.standard.set(weight, forKey: self.userDefaultsKeys.userWeight)
+        }
+    }
+    
+    /// 根據體重更新營養目標
+    func updateNutritionGoalsBasedOnWeight() {
+        let nutrition = WeightBasedNutrition.calculateBaseNutritionGoals(for: userWeight)
+        
+        DispatchQueue.main.async {
+            self.carbsGoal = Double(nutrition.carbs)
+            self.proteinGoal = Double(nutrition.protein)
+            self.fatGoal = Double(nutrition.fat)
+            
+            self.saveNutritionGoals()
+        }
+    }
+    
+    /// 更新營養目標
+    /// - Parameters:
+    ///   - carbs: 碳水化合物目標（公克）
+    ///   - protein: 蛋白質目標（公克）
+    ///   - fat: 脂肪目標（公克）
+    func updateNutritionGoals(carbs: Double, protein: Double, fat: Double) {
+        DispatchQueue.main.async {
+            self.carbsGoal = carbs
+            self.proteinGoal = protein
+            self.fatGoal = fat
+            
+            self.saveNutritionGoals()
+        }
+    }
+    
+    /// 儲存營養目標到 UserDefaults
+    private func saveNutritionGoals() {
+        UserDefaults.standard.set(carbsGoal, forKey: userDefaultsKeys.carbsGoal)
+        UserDefaults.standard.set(proteinGoal, forKey: userDefaultsKeys.proteinGoal)
+        UserDefaults.standard.set(fatGoal, forKey: userDefaultsKeys.fatGoal)
+    }
+    
+    /// 獲取當前營養目標
+    /// - Returns: 當前的每日營養目標
+    func getCurrentNutritionGoals() -> DailyGoal {
+        return DailyGoal.custom(
+            carbs: Int(carbsGoal),
+            protein: Int(proteinGoal),
+            fat: Int(fatGoal)
+        )
+    }
+    
+    /// 計算總熱量目標
+    var totalCaloriesGoal: Int {
+        return WeightBasedNutrition.calculateTotalCalories(
+            carbs: Int(carbsGoal),
+            protein: Int(proteinGoal),
+            fat: Int(fatGoal)
+        )
     }
 }
 
