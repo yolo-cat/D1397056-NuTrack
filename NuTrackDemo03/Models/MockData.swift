@@ -177,11 +177,60 @@ extension NutritionData {
 struct FoodLogEntry: Identifiable {
     let id = UUID()
     let time: String
-    let meals: [MealItem]
-    let type: MealType
+    let meals: [MealItem]?
+    let type: MealType?
+    let nutrition: NutritionInfo?
+    
+    // 舊版建構子：基於餐點
+    init(time: String, meals: [MealItem], type: MealType) {
+        self.time = time
+        self.meals = meals
+        self.type = type
+        self.nutrition = nil
+    }
+    
+    // 新版建構子：直接營養記錄
+    init(time: String, nutrition: NutritionInfo) {
+        self.time = time
+        self.meals = nil
+        self.type = nil
+        self.nutrition = nutrition
+    }
     
     var totalCalories: Int {
-        meals.reduce(0) { $0 + $1.nutrition.calories }
+        if let nutrition = nutrition {
+            return nutrition.calories
+        } else if let meals = meals {
+            return meals.reduce(0) { $0 + $1.nutrition.calories }
+        }
+        return 0
+    }
+    
+    var totalCarbs: Int {
+        if let nutrition = nutrition {
+            return nutrition.carbs
+        } else if let meals = meals {
+            return meals.reduce(0) { $0 + $1.nutrition.carbs }
+        }
+        return 0
+    }
+    
+    var totalProtein: Int {
+        if let nutrition = nutrition {
+            return nutrition.protein
+        } else if let meals = meals {
+            return meals.reduce(0) { $0 + $1.nutrition.protein }
+        }
+        return 0
+    }
+    
+    var totalFat: Int {
+        if let nutrition = nutrition {
+            return nutrition.fat
+        } else if let meals = meals {
+            return meals.reduce(0) { $0 + $1.nutrition.fat }
+        }
+        return 0
     }
     
     var caloriePercentage: Int {
@@ -189,7 +238,12 @@ struct FoodLogEntry: Identifiable {
     }
     
     var description: String {
-        meals.map { $0.name }.joined(separator: " + ")
+        if let meals = meals {
+            return meals.map { $0.name }.joined(separator: " + ")
+        } else if let nutrition = nutrition {
+            return "營養記錄"
+        }
+        return "未知記錄"
     }
 }
 

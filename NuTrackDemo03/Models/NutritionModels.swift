@@ -23,6 +23,15 @@ struct NutritionInfo {
         self.protein = protein
         self.fat = fat
     }
+    
+    /// 從三大營養素重量自動計算熱量的便利建構子
+    init(carbsGrams: Int, proteinGrams: Int, fatGrams: Int) {
+        self.carbs = carbsGrams
+        self.protein = proteinGrams
+        self.fat = fatGrams
+        // 自動計算熱量：碳水 4kcal/g + 蛋白質 4kcal/g + 脂肪 9kcal/g
+        self.calories = (carbsGrams * 4) + (proteinGrams * 4) + (fatGrams * 9)
+    }
 }
 
 /// 餐點類型列舉
