@@ -1,0 +1,294 @@
+//
+//  AddNutritionView.swift
+//  NuTrackDemo03
+//
+//  Created by NuTrack on 2024/8/20.
+//
+
+import SwiftUI
+
+struct AddNutritionView: View {
+    @State private var carbsInput: String = ""
+    @State private var proteinInput: String = ""
+    @State private var fatInput: String = ""
+    @State private var showSuccessAnimation = false
+    @Environment(\.presentationMode) var presentationMode
+    
+    let onNutritionAdded: (NutritionInfo) -> Void
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.backgroundGray.opacity(0.3)
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Header
+                        headerSection
+                        
+                        // Nutrition input fields
+                        nutritionInputSection
+                        
+                        // Calorie calculation preview
+                        caloriePreviewSection
+                        
+                        Spacer(minLength: 100)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                }
+                
+                // Success animation overlay
+                if showSuccessAnimation {
+                    successAnimationOverlay
+                }
+            }
+            .navigationTitle("記錄營養")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .foregroundColor(.secondary)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完成") {
+                        addNutrition()
+                    }
+                    .disabled(!isInputValid)
+                    .foregroundColor(isInputValid ? .primaryBlue : .gray)
+                    .fontWeight(.medium)
+                }
+            }
+        }
+    }
+    
+    // MARK: - View Components
+    
+    private var headerSection: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: 50))
+                .foregroundColor(.primaryBlue)
+            
+            Text("輸入三大營養素攝取量")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            Text("輸入公克數，系統將自動計算熱量")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.vertical, 20)
+    }
+    
+    private var nutritionInputSection: some View {
+        VStack(spacing: 16) {
+            NutrientInputField(
+                title: "碳水化合物",
+                color: .carbsColor,
+                value: $carbsInput,
+                unit: "g"
+            )
+            
+            NutrientInputField(
+                title: "蛋白質",
+                color: .proteinColor,
+                value: $proteinInput,
+                unit: "g"
+            )
+            
+            NutrientInputField(
+                title: "脂肪",
+                color: .fatColor,
+                value: $fatInput,
+                unit: "g"
+            )
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 20)
+        .background(Color.white)
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
+    
+    private var caloriePreviewSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("熱量預覽")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                Text("\(calculatedCalories) 卡")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primaryBlue)
+            }
+            
+            // Calorie breakdown
+            VStack(spacing: 8) {
+                calorieBreakdownRow(title: "碳水化合物", grams: carbsGrams, caloriesPerGram: 4, color: .carbsColor)
+                calorieBreakdownRow(title: "蛋白質", grams: proteinGrams, caloriesPerGram: 4, color: .proteinColor)
+                calorieBreakdownRow(title: "脂肪", grams: fatGrams, caloriesPerGram: 9, color: .fatColor)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .opacity(isInputValid ? 1.0 : 0.6)
+        .animation(.easeInOut(duration: 0.3), value: isInputValid)
+    }
+    
+    private func calorieBreakdownRow(title: String, grams: Int, caloriesPerGram: Int, color: Color) -> some View {
+        HStack {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            Text("\(grams)g × \(caloriesPerGram) = \(grams * caloriesPerGram) 卡")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var successAnimationOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation {
+                        showSuccessAnimation = false
+                    }
+                }
+            
+            VStack(spacing: 20) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.green)
+                    .scaleEffect(showSuccessAnimation ? 1.0 : 0.1)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.6), value: showSuccessAnimation)
+                
+                Text("營養記錄成功！")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .opacity(showSuccessAnimation ? 1.0 : 0)
+                    .animation(.easeInOut(duration: 0.3).delay(0.2), value: showSuccessAnimation)
+            }
+            .padding(.horizontal, 40)
+            .padding(.vertical, 30)
+            .background(.white)
+            .cornerRadius(20)
+            .shadow(radius: 20)
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var carbsGrams: Int {
+        Int(carbsInput) ?? 0
+    }
+    
+    private var proteinGrams: Int {
+        Int(proteinInput) ?? 0
+    }
+    
+    private var fatGrams: Int {
+        Int(fatInput) ?? 0
+    }
+    
+    private var calculatedCalories: Int {
+        (carbsGrams * 4) + (proteinGrams * 4) + (fatGrams * 9)
+    }
+    
+    private var isInputValid: Bool {
+        carbsGrams > 0 || proteinGrams > 0 || fatGrams > 0
+    }
+    
+    // MARK: - Actions
+    
+    private func addNutrition() {
+        guard isInputValid else { return }
+        
+        let nutritionInfo = NutritionInfo(
+            carbsGrams: carbsGrams,
+            proteinGrams: proteinGrams,
+            fatGrams: fatGrams
+        )
+        
+        onNutritionAdded(nutritionInfo)
+        
+        // Show success animation
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            showSuccessAnimation = true
+        }
+        
+        // Dismiss after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation {
+                showSuccessAnimation = false
+            }
+            presentationMode.wrappedValue.dismiss()
+        }
+    }
+}
+
+// MARK: - Nutrient Input Field Component
+
+struct NutrientInputField: View {
+    let title: String
+    let color: Color
+    @Binding var value: String
+    let unit: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                Text(unit)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            TextField("0", text: $value)
+                .keyboardType(.numberPad)
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(color.opacity(0.1))
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(color.opacity(0.3), lineWidth: 1)
+                )
+        }
+    }
+}
+
+#Preview {
+    AddNutritionView { nutrition in
+        print("Added nutrition: \(nutrition)")
+    }
+}
