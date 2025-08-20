@@ -54,6 +54,9 @@ struct NewNutritionTrackerView: View {
                 addNutritionEntry(nutritionInfo)
             }
         }
+        .onAppear {
+            updateNutritionData()
+        }
     }
     
     // MARK: - Main Nutrition Tracking View
@@ -65,9 +68,7 @@ struct NewNutritionTrackerView: View {
             
             VStack(spacing: 0) {
                 // Header with navigation, title, and user avatar
-                HeaderView(username: userManager.currentUsername) {
-                    userManager.logout()
-                }
+                HeaderView(username: userManager.currentUsername, userManager: userManager)
                 
                 // Main scrollable content
                 ScrollView {
@@ -168,7 +169,8 @@ struct NewNutritionTrackerView: View {
             sum + entry.totalFat
         }
         
-        let goal = DailyGoal.standard
+        // 使用動態營養目標而非靜態目標
+        let goal = userManager.getCurrentNutritionGoals()
         
         nutritionData = NutritionData(
             caloriesConsumed: totalCalories,
