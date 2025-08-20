@@ -14,83 +14,28 @@ struct NewNutritionTrackerView: View {
     @State private var showAddMeal = false
     
     var body: some View {
-        ZStack {
-                    // 根據 selectedTab 切換不同內容
-                    Group {
-                        switch selectedTab {
-                        case 0:
-                            NavigationView { mainNutritionView }
-                        case 1:
-                            DiaryView()
-                        case 2:
-                            AddMealView { newEntry in addMealEntry(newEntry) }
-                        case 3:
-                            TrendsView()
-                        case 4:
-                            SettingsView()
-                        default:
-                            EmptyView()
-                        }
-                    }
-                    .ignoresSafeArea(.keyboard) // 避免鍵盤遮擋
-
-                    // AlternativeCustomTabBar 疊加在底部
-                    VStack {
-                        Spacer()
-                        AlternativeCustomTabBar(selectedTab: $selectedTab) {
-                            // 按下加號時的行為
-                            selectedTab = 2
-                        }
-                        .padding(.bottom, -35) // 可視需求調整
-                    }
-                }
-// 簡單圖標底部導航列
-//        TabView(selection: $selectedTab) {
-//            // Home Tab
-//            NavigationView {
-//                mainNutritionView
-//            }
-//            .tabItem {
-//                Image(systemName: "house.fill")
-//                Text("Home")
-//            }
-//            .tag(0)
-//            
-//            // Diary Tab
-//            DiaryView()
-//                .tabItem {
-//                    Image(systemName: "book.fill")
-//                    Text("Diary")
-//                }
-//                .tag(1)
-//            
-//            // Add Tab (Center with larger icon)
-//            AddMealView { newEntry in
-//                addMealEntry(newEntry)
-//            }
-//            .tabItem {
-//                Image(systemName: "plus.circle.fill")
-//                Text("Add")
-//            }
-//            .tag(2)
-//            
-//            // Trends Tab
-//            TrendsView()
-//                .tabItem {
-//                    Image(systemName: "chart.line.uptrend.xyaxis")
-//                    Text("Trends")
-//                }
-//                .tag(3)
-//            
-//            // Settings Tab
-//            SettingsView()
-//                .tabItem {
-//                    Image(systemName: "gearshape.fill")
-//                    Text("Settings")
-//                }
-//                .tag(4)
-//        }
-//        .accentColor(.primaryBlue)
+        TabView(selection: $selectedTab) {
+            // Home Tab - Main nutrition tracking view
+            NavigationView {
+                mainNutritionView
+            }
+            .tabItem {
+                Image(systemName: "house.fill")
+                Text("營養追蹤")
+            }
+            .tag(0)
+            
+            // Add Meal Tab - Simplified food addition
+            AddMealView { newEntry in
+                addMealEntry(newEntry)
+            }
+            .tabItem {
+                Image(systemName: "plus.circle.fill")
+                Text("新增餐點")
+            }
+            .tag(1)
+        }
+        .accentColor(.primaryBlue)
     }
     
     // MARK: - Main Nutrition Tracking View
@@ -131,9 +76,9 @@ struct NewNutritionTrackerView: View {
             // Central nutrition ring showing calorie progress
             CalorieRingView(nutritionData: nutritionData)
             
-            // Consumed vs Burned display
-            HStack(spacing: 40) {
-                VStack {
+            // Enhanced nutrition summary
+            HStack(spacing: 30) {
+                VStack(spacing: 4) {
                     Text("\(nutritionData.caloriesConsumed)")
                         .font(.title2)
                         .fontWeight(.bold)
@@ -144,13 +89,24 @@ struct NewNutritionTrackerView: View {
                         .foregroundColor(.secondary)
                 }
                 
-                VStack {
-                    Text("\(nutritionData.caloriesBurned)")
+                VStack(spacing: 4) {
+                    // Text("\(nutritionData.caloriesBurned)")
+                    //     .font(.title2)
+                    //     .fontWeight(.bold)
+                    //     .foregroundColor(.carbsColor)
+                    
+                    // Text("已燃燒")
+                    //     .font(.caption)
+                    //     .foregroundColor(.secondary)
+                }
+                
+                VStack(spacing: 4) {
+                    Text("\(Int(nutritionData.macronutrientPercentages.carbs * 100))%")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.carbsColor)
                     
-                    Text("已燃燒")
+                    Text("碳水比例")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

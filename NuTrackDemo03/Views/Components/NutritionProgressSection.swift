@@ -18,34 +18,46 @@ struct NutritionProgressSection: View {
                 Text("營養素追蹤")
                     .font(.headline)
                     .fontWeight(.semibold)
+                
                 Spacer()
+                
+                // Show calorie distribution percentages
+                Text("熱量分佈")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             
             VStack(spacing: 16) {
-                // Carbohydrates progress bar
+                // Carbohydrates progress bar with enhanced info
                 NutritionProgressBar(
                     title: "碳水化合物",
                     nutrientData: nutritionData.carbs,
+                    calorieInfo: nutritionData.macronutrientCaloriesDistribution.carbs,
+                    percentage: nutritionData.macronutrientPercentages.carbs,
                     color: .carbsColor,
                     showProgress: showProgress
                 )
                 .opacity(showProgress ? 1 : 0)
                 .animation(.easeInOut(duration: 0.8).delay(animationDelays[0]), value: showProgress)
                 
-                // Protein progress bar
+                // Protein progress bar with enhanced info
                 NutritionProgressBar(
                     title: "蛋白質",
                     nutrientData: nutritionData.protein,
+                    calorieInfo: nutritionData.macronutrientCaloriesDistribution.protein,
+                    percentage: nutritionData.macronutrientPercentages.protein,
                     color: .proteinColor,
                     showProgress: showProgress
                 )
                 .opacity(showProgress ? 1 : 0)
                 .animation(.easeInOut(duration: 0.8).delay(animationDelays[1]), value: showProgress)
                 
-                // Fat progress bar
+                // Fat progress bar with enhanced info
                 NutritionProgressBar(
                     title: "脂肪",
                     nutrientData: nutritionData.fat,
+                    calorieInfo: nutritionData.macronutrientCaloriesDistribution.fat,
+                    percentage: nutritionData.macronutrientPercentages.fat,
                     color: .fatColor,
                     showProgress: showProgress
                 )
@@ -66,6 +78,8 @@ struct NutritionProgressSection: View {
 struct NutritionProgressBar: View {
     let title: String
     let nutrientData: NutrientData
+    let calorieInfo: Int
+    let percentage: Double
     let color: Color
     let showProgress: Bool
     
@@ -78,10 +92,16 @@ struct NutritionProgressBar: View {
                 
                 Spacer()
                 
-                Text("\(nutrientData.percentage)%")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(color)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(nutrientData.percentage)%")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(color)
+                    
+                    Text("\(Int(percentage * 100))% 熱量")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
             }
             
             HStack {
@@ -89,34 +109,60 @@ struct NutritionProgressBar: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
+                Text("•")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text("\(calorieInfo) 卡")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
                 Spacer()
                 
-                Text("\(nutrientData.goal)\(nutrientData.unit)")
+                Text("目標 \(nutrientData.goal)\(nutrientData.unit)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
-            // Progress bar with smooth animation
+            // Enhanced progress bar with gradient
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     // Background track
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: 6)
                         .fill(Color.gray.opacity(0.2))
-                        .frame(height: 8)
+                        .frame(height: 12)
                     
-                    // Progress fill
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(color)
+                    // Progress fill with gradient
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [color.opacity(0.7), color]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
                         .frame(
                             width: showProgress ? geometry.size.width * min(nutrientData.progress, 1.0) : 0,
-                            height: 8
+                            height: 12
                         )
                         .animation(.easeInOut(duration: 1.0), value: showProgress)
+                    
+                    // Progress indicator dot
+                    if showProgress && nutrientData.progress > 0 {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 6, height: 6)
+                            .position(
+                                x: min(geometry.size.width * nutrientData.progress, geometry.size.width - 3),
+                                y: 6
+                            )
+                            .animation(.easeInOut(duration: 1.0).delay(0.5), value: showProgress)
+                    }
                 }
             }
-            .frame(height: 8)
+            .frame(height: 12)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 }
 

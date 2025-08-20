@@ -18,33 +18,33 @@ struct CalorieRingView: View {
                 .stroke(Color.gray.opacity(0.2), lineWidth: 20)
                 .frame(width: 200, height: 200)
             
-            // Multi-color nutrition segments
+            // Multi-color nutrition segments based on actual calories
             ZStack {
-                // Carbs segment (green)
+                // Carbs segment (green) - based on calorie percentage
                 NutritionSegmentShape(
                     startAngle: .degrees(-90),
-                    endAngle: .degrees(-90 + carbsAngle * animationProgress)
+                    endAngle: .degrees(-90 + carbsCalorieAngle * animationProgress)
                 )
                 .stroke(Color.carbsColor, style: StrokeStyle(lineWidth: 20, lineCap: .round))
                 
-                // Protein segment (blue)
+                // Protein segment (blue) - based on calorie percentage  
                 NutritionSegmentShape(
-                    startAngle: .degrees(-90 + carbsAngle * animationProgress),
-                    endAngle: .degrees(-90 + (carbsAngle + proteinAngle) * animationProgress)
+                    startAngle: .degrees(-90 + carbsCalorieAngle * animationProgress),
+                    endAngle: .degrees(-90 + (carbsCalorieAngle + proteinCalorieAngle) * animationProgress)
                 )
                 .stroke(Color.proteinColor, style: StrokeStyle(lineWidth: 20, lineCap: .round))
                 
-                // Fat segment (pink)
+                // Fat segment (pink) - based on calorie percentage
                 NutritionSegmentShape(
-                    startAngle: .degrees(-90 + (carbsAngle + proteinAngle) * animationProgress),
-                    endAngle: .degrees(-90 + (carbsAngle + proteinAngle + fatAngle) * animationProgress)
+                    startAngle: .degrees(-90 + (carbsCalorieAngle + proteinCalorieAngle) * animationProgress),
+                    endAngle: .degrees(-90 + (carbsCalorieAngle + proteinCalorieAngle + fatCalorieAngle) * animationProgress)
                 )
                 .stroke(Color.fatColor, style: StrokeStyle(lineWidth: 20, lineCap: .round))
             }
             .frame(width: 200, height: 200)
             
             // Center content displaying remaining calories
-            VStack(spacing: 4) {
+            VStack(spacing: 6) {
                 Text("\(nutritionData.remainingCalories)")
                     .font(.largeTitle)
                     .fontWeight(.bold)
@@ -61,7 +61,16 @@ struct CalorieRingView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .opacity(animationProgress)
+                
+                // Nutrition status indicator
+                Text(nutritionData.nutritionStatus.description)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundColor(nutritionData.nutritionStatus.color)
+                    .multilineTextAlignment(.center)
+                    .opacity(animationProgress)
             }
+            .padding(.horizontal, 20)
         }
         .onAppear {
             withAnimation(.easeInOut(duration: 1.5)) {
@@ -70,17 +79,20 @@ struct CalorieRingView: View {
         }
     }
     
-    // Calculate angles for each nutrition segment based on progress
-    private var carbsAngle: Double {
-        min(nutritionData.carbs.progress * 120, 120) // Max 120 degrees for carbs
+    // Calculate angles for each nutrition segment based on calorie distribution
+    private var carbsCalorieAngle: Double {
+        let percentages = nutritionData.macronutrientPercentages
+        return percentages.carbs * 360  // Full circle distribution
     }
     
-    private var proteinAngle: Double {
-        min(nutritionData.protein.progress * 120, 120) // Max 120 degrees for protein
+    private var proteinCalorieAngle: Double {
+        let percentages = nutritionData.macronutrientPercentages
+        return percentages.protein * 360  // Full circle distribution
     }
     
-    private var fatAngle: Double {
-        min(nutritionData.fat.progress * 120, 120) // Max 120 degrees for fat
+    private var fatCalorieAngle: Double {
+        let percentages = nutritionData.macronutrientPercentages
+        return percentages.fat * 360  // Full circle distribution
     }
 }
 

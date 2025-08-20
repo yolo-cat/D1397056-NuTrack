@@ -9,7 +9,6 @@ import SwiftUI
 
 struct AddMealView: View {
     @State private var selectedMealType: MealType = .breakfast
-    @State private var searchText = ""
     @State private var selectedFoods: [MealItem] = []
     @State private var showSuccessAnimation = false
     
@@ -26,10 +25,7 @@ struct AddMealView: View {
                         // Meal type selector
                         mealTypeSelector
                         
-                        // Food search section
-                        foodSearchSection
-                        
-                        // Available foods
+                        // Available foods by category
                         availableFoodsSection
                         
                         // Selected foods summary
@@ -57,6 +53,7 @@ struct AddMealView: View {
                     }
                     .disabled(selectedFoods.isEmpty)
                     .foregroundColor(selectedFoods.isEmpty ? .gray : .primaryBlue)
+                    .fontWeight(.medium)
                 }
             }
         }
@@ -114,52 +111,19 @@ struct AddMealView: View {
         }
     }
     
-    private var foodSearchSection: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text("搜尋食物")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-            }
-            
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
-                
-                TextField("輸入食物名稱...", text: $searchText)
-                    .textFieldStyle(.plain)
-                
-                if !searchText.isEmpty {
-                    Button(action: {
-                        searchText = ""
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(.gray.opacity(0.1))
-            .cornerRadius(10)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .background(.white)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-    }
     
     private var availableFoodsSection: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("常見食物")
+                Text("選擇 \(selectedMealType.rawValue) 食物")
                     .font(.headline)
                     .fontWeight(.semibold)
                 
                 Spacer()
+                
+                Text("(\(filteredFoods.count) 項食物)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
@@ -180,47 +144,96 @@ struct AddMealView: View {
                 }
             }
         }) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text(food.name)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(food.name)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                            .multilineTextAlignment(.leading)
+                        
+                        Text("\(food.nutrition.calories) 卡路里")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primaryBlue)
+                    }
                     
                     Spacer()
                     
                     if selectedFoods.contains(where: { $0.id == food.id }) {
                         Image(systemName: "checkmark.circle.fill")
+                            .font(.title2)
                             .foregroundColor(.primaryBlue)
+                            .scaleEffect(1.2)
+                    } else {
+                        Image(systemName: "plus.circle")
+                            .font(.title2)
+                            .foregroundColor(.gray)
                     }
                 }
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(food.nutrition.calories) 卡路里")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    HStack {
-                        Text("碳: \(food.nutrition.carbs)g")
-                        Text("蛋: \(food.nutrition.protein)g")
-                        Text("脂: \(food.nutrition.fat)g")
+                // Nutrition breakdown
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        nutritionTag("碳", value: food.nutrition.carbs, color: .carbsColor)
+                        nutritionTag("蛋", value: food.nutrition.protein, color: .proteinColor)
+                        nutritionTag("脂", value: food.nutrition.fat, color: .fatColor)
                     }
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(selectedFoods.contains(where: { $0.id == food.id }) ? 
-                        Color.primaryBlue.opacity(0.1) : .white)
+            .padding(.vertical, 16)
+            .background(
+                Group {
+                    if selectedFoods.contains(where: { $0.id == food.id }) {
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.primaryBlue.opacity(0.1), Color.primaryBlue.opacity(0.05)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    } else {
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.white, Color.white]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    }
+                }
+            )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(selectedFoods.contains(where: { $0.id == food.id }) ? 
-                            Color.primaryBlue : .clear, lineWidth: 2)
+                    .stroke(
+                        selectedFoods.contains(where: { $0.id == food.id }) ? 
+                        Color.primaryBlue : Color.clear, 
+                        lineWidth: 2
+                    )
             )
-            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+            .shadow(
+                color: selectedFoods.contains(where: { $0.id == food.id }) ?
+                Color.primaryBlue.opacity(0.2) : Color.black.opacity(0.05),
+                radius: selectedFoods.contains(where: { $0.id == food.id }) ? 4 : 2,
+                x: 0,
+                y: selectedFoods.contains(where: { $0.id == food.id }) ? 2 : 1
+            )
         }
+    }
+    
+    private func nutritionTag(_ label: String, value: Int, color: Color) -> some View {
+        HStack(spacing: 2) {
+            Text(label)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundColor(color)
+            Text("\(value)g")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(color.opacity(0.1))
+        .cornerRadius(4)
     }
     
     private var selectedFoodsSummary: some View {
@@ -305,12 +318,7 @@ struct AddMealView: View {
     }
     
     private var filteredFoods: [MealItem] {
-        let foods = MealItem.mockMeals.filter { $0.type == selectedMealType }
-        if searchText.isEmpty {
-            return foods
-        } else {
-            return foods.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        }
+        return MealItem.mockMeals.filter { $0.type == selectedMealType }
     }
     
     private var totalCalories: Int {
@@ -339,7 +347,6 @@ struct AddMealView: View {
             withAnimation {
                 showSuccessAnimation = false
                 selectedFoods.removeAll()
-                searchText = ""
             }
         }
     }
