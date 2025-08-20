@@ -144,47 +144,4 @@ struct NutritionData {
         return (carbsPercent, proteinPercent, fatPercent)
     }
     
-    /// 獲取營養素攝取狀態
-    var nutritionStatus: NutritionStatus {
-        let carbsStatus: NutrientStatus =  carbs.current >= carbs.goal ? .adequate : .insufficient
-        let proteinStatus: NutrientStatus = protein.current >= protein.goal ? .adequate : .insufficient
-        let fatStatus: NutrientStatus = fat.current >= fat.goal ? .adequate : .insufficient
-        
-        let adequateCount = [carbsStatus, proteinStatus, fatStatus].filter { $0 == .adequate }.count
-        
-        switch adequateCount {
-        case 3: return .excellent
-        case 2: return .good
-        case 1: return .fair
-        default: return .needsImprovement
-        }
     }
-}
-
-/// 營養攝取狀態
-enum NutritionStatus {
-    case excellent, good, fair, needsImprovement
-    
-    var description: String {
-        switch self {
-        case .excellent: return "營養均衡，表現優秀！"
-        case .good: return "營養攝取良好"
-        case .fair: return "營養攝取尚可"
-        case .needsImprovement: return "需要改善營養攝取"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .excellent: return .green
-        case .good: return .primaryBlue
-        case .fair: return .accentOrange
-        case .needsImprovement: return .red
-        }
-    }
-}
-
-/// 營養素攝取狀態
-enum NutrientStatus {
-    case adequate, insufficient
-}

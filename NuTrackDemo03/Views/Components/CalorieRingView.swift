@@ -62,13 +62,7 @@ struct CalorieRingView: View {
                     .foregroundColor(.secondary)
                     .opacity(animationProgress)
                 
-                // Nutrition status indicator
-                Text(nutritionData.nutritionStatus.description)
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                    .foregroundColor(nutritionData.nutritionStatus.color)
-                    .multilineTextAlignment(.center)
-                    .opacity(animationProgress)
+                
             }
             .padding(.horizontal, 20)
         }
