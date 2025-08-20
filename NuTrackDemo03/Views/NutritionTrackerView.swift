@@ -8,34 +8,52 @@
 import SwiftUI
 
 struct NewNutritionTrackerView: View {
+    @ObservedObject var userManager: SimpleUserManager
     @State private var nutritionData = NutritionData.sample
     @State private var foodEntries = FoodLogEntry.todayEntries
-    @State private var selectedTab = 0
-    @State private var showAddMeal = false
+    @State private var showAddNutrition = false
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            // Home Tab - Main nutrition tracking view
-            NavigationView {
+        NavigationView {
+            ZStack {
                 mainNutritionView
+                
+                // Bottom floating add button
+                VStack {
+                    Spacer()
+                    
+                    HStack {
+                        Spacer()
+                        
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                showAddNutrition = true
+                            }
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.primaryBlue)
+                                    .frame(width: 60, height: 60)
+                                    .shadow(color: Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                                
+                                Image(systemName: "plus")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.bottom, 30)
+                }
             }
-            .tabItem {
-                Image(systemName: "house.fill")
-                Text("營養追蹤")
-            }
-            .tag(0)
-            
-            // Add Meal Tab - Simplified food addition
-            AddMealView { newEntry in
-                addMealEntry(newEntry)
-            }
-            .tabItem {
-                Image(systemName: "plus.circle.fill")
-                Text("新增餐點")
-            }
-            .tag(1)
         }
-        .accentColor(.primaryBlue)
+        .sheet(isPresented: $showAddNutrition) {
+            AddNutritionView { nutritionInfo in
+                addNutritionEntry(nutritionInfo)
+            }
+        }
     }
     
     // MARK: - Main Nutrition Tracking View
@@ -47,7 +65,9 @@ struct NewNutritionTrackerView: View {
             
             VStack(spacing: 0) {
                 // Header with navigation, title, and user avatar
-                HeaderView()
+                HeaderView(username: userManager.currentUsername) {
+                    userManager.logout()
+                }
                 
                 // Main scrollable content
                 ScrollView {
@@ -117,6 +137,18 @@ struct NewNutritionTrackerView: View {
     
     // MARK: - Helper Functions
     
+    private func addNutritionEntry(_ nutritionInfo: NutritionInfo) {
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+            let currentTime = timeFormatter.string(from: Date())
+            let simplifiedEntry = FoodLogEntry(
+                time: currentTime,
+                nutrition: nutritionInfo
+            )
+            foodEntries.append(simplifiedEntry)
+            updateNutritionData()
+        }
+    }
+    
     private func addMealEntry(_ entry: FoodLogEntry) {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
             foodEntries.append(entry)
@@ -127,13 +159,13 @@ struct NewNutritionTrackerView: View {
     private func updateNutritionData() {
         let totalCalories = foodEntries.reduce(0) { $0 + $1.totalCalories }
         let totalCarbs = foodEntries.reduce(0) { sum, entry in
-            sum + entry.meals.reduce(0) { $0 + $1.nutrition.carbs }
+            sum + entry.totalCarbs
         }
         let totalProtein = foodEntries.reduce(0) { sum, entry in
-            sum + entry.meals.reduce(0) { $0 + $1.nutrition.protein }
+            sum + entry.totalProtein
         }
         let totalFat = foodEntries.reduce(0) { sum, entry in
-            sum + entry.meals.reduce(0) { $0 + $1.nutrition.fat }
+            sum + entry.totalFat
         }
         
         let goal = DailyGoal.standard
@@ -147,8 +179,14 @@ struct NewNutritionTrackerView: View {
             fat: NutrientData(current: totalFat, goal: goal.fat, unit: "g")
         )
     }
+    
+    private var timeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }
 }
 
 #Preview {
-    NewNutritionTrackerView()
+    NewNutritionTrackerView(userManager: SimpleUserManager())
 }

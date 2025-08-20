@@ -61,21 +61,21 @@ struct FoodEntryRowView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Time circle with meal type icon
+            // Time circle with meal type icon or nutrition icon
             ZStack {
                 Circle()
-                    .fill(mealTypeColor.opacity(0.15))
+                    .fill(entryColor.opacity(0.15))
                     .frame(width: 50, height: 50)
                 
                 VStack(spacing: 2) {
-                    Image(systemName: entry.type.icon)
+                    Image(systemName: entryIcon)
                         .font(.caption)
-                        .foregroundColor(mealTypeColor)
+                        .foregroundColor(entryColor)
                     
                     Text(entry.time)
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(mealTypeColor)
+                        .foregroundColor(entryColor)
                 }
             }
             
@@ -109,7 +109,7 @@ struct FoodEntryRowView: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(mealTypeColor)
+                .background(entryColor)
                 .cornerRadius(12)
         }
         .padding(.vertical, 12)
@@ -119,11 +119,25 @@ struct FoodEntryRowView: View {
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
     
-    private var mealTypeColor: Color {
-        switch entry.type {
-        case .breakfast: return .accentOrange
-        case .lunch: return .primaryBlue
-        case .dinner: return .fatColor
+    private var entryColor: Color {
+        if let type = entry.type {
+            switch type {
+            case .breakfast: return .accentOrange
+            case .lunch: return .primaryBlue
+            case .dinner: return .fatColor
+            }
+        } else {
+            // 直接營養記錄使用綠色
+            return .green
+        }
+    }
+    
+    private var entryIcon: String {
+        if let type = entry.type {
+            return type.icon
+        } else {
+            // 直接營養記錄使用營養圖標
+            return "leaf.fill"
         }
     }
 }
