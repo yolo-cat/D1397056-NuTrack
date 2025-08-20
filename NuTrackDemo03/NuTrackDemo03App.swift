@@ -32,7 +32,7 @@ struct MainAppView: View {
     @ObservedObject var userManager: SimpleUserManager
     
     var body: some View {
-        NewNutritionTrackerView()
+        NewNutritionTrackerView(userManager: userManager)
             .onShake {
                 // 開發用：搖動裝置可以登出
                 #if DEBUG

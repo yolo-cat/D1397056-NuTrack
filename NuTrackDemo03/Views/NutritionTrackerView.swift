@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct NewNutritionTrackerView: View {
+    @ObservedObject var userManager: SimpleUserManager
     @State private var nutritionData = NutritionData.sample
     @State private var foodEntries = FoodLogEntry.todayEntries
     @State private var selectedTab = 0
@@ -47,7 +48,9 @@ struct NewNutritionTrackerView: View {
             
             VStack(spacing: 0) {
                 // Header with navigation, title, and user avatar
-                HeaderView()
+                HeaderView(username: userManager.currentUsername) {
+                    userManager.logout()
+                }
                 
                 // Main scrollable content
                 ScrollView {
@@ -150,5 +153,5 @@ struct NewNutritionTrackerView: View {
 }
 
 #Preview {
-    NewNutritionTrackerView()
+    NewNutritionTrackerView(userManager: SimpleUserManager())
 }
