@@ -87,7 +87,8 @@ struct NutrientData {
     var unit: String
     
     var progress: Double {
-        Double(current) / Double(goal)
+        guard goal > 0 else { return 0.0 }
+        return Double(current) / Double(goal)
     }
     
     var percentage: Int {
