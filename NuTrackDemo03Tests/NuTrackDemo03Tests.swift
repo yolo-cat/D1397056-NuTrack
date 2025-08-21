@@ -104,5 +104,15 @@ struct NuTrackDemo03Tests {
         // Test percentage (should be 50)
         #expect(nutrientData.percentage == 50)
     }
+    
+    @Test func testNutrientDataZeroGoalEdgeCase() async throws {
+        let nutrientData = NutrientData(current: 50, goal: 0, unit: "g")
+        
+        // Test progress with zero goal (should be 0.0 to avoid division by zero)
+        #expect(nutrientData.progress == 0.0)
+        
+        // Test percentage with zero goal (should be 0)
+        #expect(nutrientData.percentage == 0)
+    }
 
 }
