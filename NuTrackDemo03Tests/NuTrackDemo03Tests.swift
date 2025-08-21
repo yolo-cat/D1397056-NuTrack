@@ -52,5 +52,57 @@ struct NuTrackDemo03Tests {
         // Clean up
         userManager2.logout()
     }
+    
+    // MARK: - CalorieRingView Tests
+    
+    @Test func testNutritionProgressCalculation() async throws {
+        // Test data with known progress values
+        let testData = NutritionData(
+            caloriesConsumed: 1000,
+            caloriesBurned: 200,
+            caloriesGoal: 2000,
+            carbs: NutrientData(current: 60, goal: 120, unit: "g"),    // 50% progress
+            protein: NutrientData(current: 90, goal: 180, unit: "g"), // 50% progress
+            fat: NutrientData(current: 90, goal: 180, unit: "g")      // 50% progress
+        )
+        
+        // Test individual progress calculations
+        #expect(testData.carbs.progress == 0.5)
+        #expect(testData.protein.progress == 0.5)
+        #expect(testData.fat.progress == 0.5)
+        
+        // Test overall nutrition balance
+        #expect(testData.totalNutrientProgress == 0.5)
+    }
+    
+    @Test func testNutritionProgressOverGoal() async throws {
+        // Test data with over-goal values
+        let testData = NutritionData(
+            caloriesConsumed: 2000,
+            caloriesBurned: 200,
+            caloriesGoal: 2000,
+            carbs: NutrientData(current: 180, goal: 120, unit: "g"),  // 150% progress
+            protein: NutrientData(current: 180, goal: 180, unit: "g"), // 100% progress
+            fat: NutrientData(current: 90, goal: 180, unit: "g")      // 50% progress
+        )
+        
+        // Test progress calculations
+        #expect(testData.carbs.progress == 1.5)
+        #expect(testData.protein.progress == 1.0)
+        #expect(testData.fat.progress == 0.5)
+        
+        // Test overall nutrition balance
+        #expect(testData.totalNutrientProgress == 1.0) // (1.5 + 1.0 + 0.5) / 3
+    }
+    
+    @Test func testNutrientDataPercentageCalculation() async throws {
+        let nutrientData = NutrientData(current: 75, goal: 150, unit: "g")
+        
+        // Test progress (should be 0.5)
+        #expect(nutrientData.progress == 0.5)
+        
+        // Test percentage (should be 50)
+        #expect(nutrientData.percentage == 50)
+    }
 
 }
