@@ -73,11 +73,11 @@ struct NewNutritionTrackerView: View {
                 // Main scrollable content
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Central nutrition ring and calorie tracking
-                        calorieTrackingSection
+//                         Central nutrition ring and calorie tracking
+//                        calorieTrackingSection
                         
-                        // Nutrition progress bars (carbs, protein, fat)
-//                        NutritionProgressSection(nutritionData: nutritionData)
+//                         Nutrition progress bars (carbs, protein, fat)
+                        NutritionProgressSection(nutritionData: nutritionData)
                         
                         // Today's food entries
                         TodayFoodLogView(foodEntries: foodEntries)
@@ -95,7 +95,7 @@ struct NewNutritionTrackerView: View {
     private var calorieTrackingSection: some View {
         VStack(spacing: 20) {
             // Central nutrition ring showing calorie progress
-            CalorieRingView(nutritionData: nutritionData)
+//            CalorieRingView(nutritionData: nutritionData)
             
             // Enhanced nutrition summary
             HStack(spacing: 30) {
