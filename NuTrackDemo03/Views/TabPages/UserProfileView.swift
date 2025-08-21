@@ -288,7 +288,7 @@ struct UserProfileView: View {
     
     private var totalCaloriesSection: some View {
         VStack(spacing: 12) {
-            Text("總熱量目標")
+            Text("預估熱量")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)

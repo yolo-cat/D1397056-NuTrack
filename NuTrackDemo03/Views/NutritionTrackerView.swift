@@ -77,7 +77,7 @@ struct NewNutritionTrackerView: View {
                         calorieTrackingSection
                         
                         // Nutrition progress bars (carbs, protein, fat)
-                        NutritionProgressSection(nutritionData: nutritionData)
+//                        NutritionProgressSection(nutritionData: nutritionData)
                         
                         // Today's food entries
                         TodayFoodLogView(foodEntries: foodEntries)
