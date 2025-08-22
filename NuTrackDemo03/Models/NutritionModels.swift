@@ -34,17 +34,58 @@ struct NutritionInfo {
     }
 }
 
-/// 餐點類型列舉
-enum MealType: String, CaseIterable {
-    case breakfast = "早餐"
-    case lunch = "午餐"
-    case dinner = "晚餐"
+/// 基於時間的餐點分類列舉
+enum TimeBasedMealCategory: String, CaseIterable {
+    case lateNight = "凌晨"        // 00:00-04:59
+    case breakfast = "早餐時段"    // 05:00-10:59
+    case lunch = "午餐時段"        // 11:00-15:59
+    case dinner = "晚餐時段"       // 16:00-22:59
+    case midnightSnack = "夜宵時段" // 23:00-23:59
     
     var icon: String {
         switch self {
+        case .lateNight: return "moon.stars.fill"
         case .breakfast: return "sunrise.fill"
         case .lunch: return "sun.max.fill"
-        case .dinner: return "moon.fill"
+        case .dinner: return "sunset.fill"
+        case .midnightSnack: return "moon.fill"
+        }
+    }
+    
+    var color: String {
+        switch self {
+        case .lateNight: return "purple"
+        case .breakfast: return "accentOrange"
+        case .lunch: return "primaryBlue"
+        case .dinner: return "fatColor"
+        case .midnightSnack: return "indigo"
+        }
+    }
+    
+    /// 從時間字串 (HH:mm 格式) 解析出對應的餐點分類
+    static func category(from timeString: String) -> TimeBasedMealCategory {
+        // 解析時間字串，期待 "HH:mm" 格式
+        let components = timeString.split(separator: ":")
+        guard components.count == 2,
+              let hour = Int(components[0]),
+              hour >= 0 && hour <= 23 else {
+            // 預設返回早餐時段
+            return .breakfast
+        }
+        
+        switch hour {
+        case 0...4:
+            return .lateNight
+        case 5...10:
+            return .breakfast
+        case 11...15:
+            return .lunch
+        case 16...22:
+            return .dinner
+        case 23:
+            return .midnightSnack
+        default:
+            return .breakfast
         }
     }
 }
@@ -53,15 +94,18 @@ enum MealType: String, CaseIterable {
 struct MealItem: Identifiable {
     let id = UUID()
     let name: String
-    let type: MealType
     let time: String
     let nutrition: NutritionInfo
     
-    init(name: String, type: MealType, time: String, nutrition: NutritionInfo) {
+    init(name: String, time: String, nutrition: NutritionInfo) {
         self.name = name
-        self.type = type
         self.time = time
         self.nutrition = nutrition
+    }
+    
+    /// 基於時間自動分類的餐點類型
+    var timeBasedCategory: TimeBasedMealCategory {
+        return TimeBasedMealCategory.category(from: time)
     }
 }
 

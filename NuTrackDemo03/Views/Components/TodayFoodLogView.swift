@@ -76,6 +76,13 @@ struct FoodEntryRowView: View {
                         .font(.caption2)
                         .fontWeight(.medium)
                         .foregroundColor(entryColor)
+                    
+                    // 新增時段標籤
+                    Text(entry.timeBasedCategory.rawValue)
+                        .font(.caption2)
+                        .fontWeight(.light)
+                        .foregroundColor(entryColor.opacity(0.8))
+                        .lineLimit(1)
                 }
             }
             
@@ -120,25 +127,18 @@ struct FoodEntryRowView: View {
     }
     
     private var entryColor: Color {
-        if let type = entry.type {
-            switch type {
-            case .breakfast: return .accentOrange
-            case .lunch: return .primaryBlue
-            case .dinner: return .fatColor
-            }
-        } else {
-            // 直接營養記錄使用綠色
-            return .green
+        let category = entry.timeBasedCategory
+        switch category {
+        case .lateNight: return .purple
+        case .breakfast: return .accentOrange
+        case .lunch: return .primaryBlue
+        case .dinner: return .fatColor
+        case .midnightSnack: return .indigo
         }
     }
     
     private var entryIcon: String {
-        if let type = entry.type {
-            return type.icon
-        } else {
-            // 直接營養記錄使用營養圖標
-            return "leaf.fill"
-        }
+        return entry.timeBasedCategory.icon
     }
 }
 
