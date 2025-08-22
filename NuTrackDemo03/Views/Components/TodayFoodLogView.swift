@@ -72,11 +72,6 @@ struct FoodEntryRowView: View {
                         .font(.caption)
                         .foregroundColor(entryColor)
                     
-                    Text(entry.time)
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundColor(entryColor)
-                    
                     // 新增時段標籤
                     Text(entry.timeBasedCategory.rawValue)
                         .font(.caption2)
@@ -88,7 +83,7 @@ struct FoodEntryRowView: View {
             
             // Food description
             VStack(alignment: .leading, spacing: 4) {
-                Text(entry.description)
+                Text(entry.time)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(2)
