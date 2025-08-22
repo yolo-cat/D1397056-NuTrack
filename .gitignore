@@ -1,3 +1,15 @@
+# Xcode
+## User-specific files
+xcuserdata/
+*.xcuserdatad
+
+## Build products
+build/
+DerivedData/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
 .DS_Store
-NuTrackDemo03.xcodeproj/project.xcworkspace/xcuserdata/joseph-m2.xcuserdatad/UserInterfaceState.xcuserstate
-*.xcuserstate
