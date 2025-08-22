@@ -52,16 +52,6 @@ enum TimeBasedMealCategory: String, CaseIterable {
         }
     }
     
-    var color: String {
-        switch self {
-        case .lateNight: return "purple"
-        case .breakfast: return "accentOrange"
-        case .lunch: return "primaryBlue"
-        case .dinner: return "fatColor"
-        case .midnightSnack: return "indigo"
-        }
-    }
-    
     /// 從時間字串 (HH:mm 格式) 解析出對應的餐點分類
     static func category(from timeString: String) -> TimeBasedMealCategory {
         // 解析時間字串，期待 "HH:mm" 格式
