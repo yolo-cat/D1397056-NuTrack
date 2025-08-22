@@ -99,7 +99,7 @@ struct FoodEntryRowView: View {
             Spacer()
             
             // Percentage badge
-            Text("\(entry.caloriePercentage)%")
+            Text(/*"\(entry.caloriePercentage)"+*/"Mock")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
