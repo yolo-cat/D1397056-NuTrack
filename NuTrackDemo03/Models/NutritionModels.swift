@@ -185,6 +185,22 @@ struct NutritionData {
         let fatCalories = fat.current * 9  // 1g 脂肪 = 9 卡路里
         return (carbsCalories, proteinCalories, fatCalories)
     }
+    
+    /// 計算三大營養素的理想熱量分佈百分比
+    var macronutrientPercentages: (carbs: Double, protein: Double, fat: Double) {
+        let distribution = macronutrientCaloriesDistribution
+        let totalMacroCalories = distribution.carbs + distribution.protein + distribution.fat
+        
+        guard totalMacroCalories > 0 else {
+            return (0, 0, 0)
+        }
+        
+        let carbsPercent = Double(distribution.carbs) / Double(totalMacroCalories)
+        let proteinPercent = Double(distribution.protein) / Double(totalMacroCalories)
+        let fatPercent = Double(distribution.fat) / Double(totalMacroCalories)
+        
+        return (carbsPercent, proteinPercent, fatPercent)
+    }
 }
 
 /// 今日食物記錄條目
