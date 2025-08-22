@@ -45,7 +45,7 @@ struct NewNutritionTrackerView: View {
                         
                         Spacer()
                     }
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 10)
                 }
             }
         }

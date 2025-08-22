@@ -97,10 +97,6 @@ struct NutritionProgressBar: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(color)
-                    
-                    Text("\(Int(percentage * 100))% 熱量")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
                 }
             }
             
