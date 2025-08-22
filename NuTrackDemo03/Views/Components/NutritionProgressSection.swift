@@ -15,7 +15,7 @@ struct NutritionProgressSection: View {
     var body: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("營養素追蹤")
+                Text("今日營養進度")
                     .font(.headline)
                     .fontWeight(.semibold)
                 

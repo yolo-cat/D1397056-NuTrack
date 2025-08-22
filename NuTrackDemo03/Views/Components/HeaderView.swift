@@ -64,5 +64,5 @@ struct HeaderView: View {
 }
 
 #Preview {
-    HeaderView(username: "Alex Chen", userManager: SimpleUserManager())
+    HeaderView(username: "", userManager: SimpleUserManager())
 }
