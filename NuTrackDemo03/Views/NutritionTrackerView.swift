@@ -73,10 +73,7 @@ struct NewNutritionTrackerView: View {
                 // Main scrollable content
                 ScrollView {
                     VStack(spacing: 24) {
-//                         Central nutrition ring and calorie tracking
-//                        calorieTrackingSection
-                        
-//                         Nutrition progress bars (carbs, protein, fat)
+                        // Nutrition progress bars (carbs, protein, fat)
                         NutritionProgressSection(nutritionData: nutritionData)
                         
                         // Today's food entries
@@ -90,52 +87,6 @@ struct NewNutritionTrackerView: View {
         .navigationBarHidden(true)
     }
     
-    // MARK: - Calorie Tracking Section
-    
-    private var calorieTrackingSection: some View {
-        VStack(spacing: 20) {
-            // Central nutrition ring showing calorie progress
-//            CalorieRingView(nutritionData: nutritionData)
-            
-            // Enhanced nutrition summary
-            HStack(spacing: 30) {
-                VStack(spacing: 4) {
-                    Text("\(nutritionData.caloriesConsumed)")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primaryBlue)
-                    
-                    Text("已攝取")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                VStack(spacing: 4) {
-                    // Text("\(nutritionData.caloriesBurned)")
-                    //     .font(.title2)
-                    //     .fontWeight(.bold)
-                    //     .foregroundColor(.carbsColor)
-                    
-                    // Text("已燃燒")
-                    //     .font(.caption)
-                    //     .foregroundColor(.secondary)
-                }
-                
-                VStack(spacing: 4) {
-                    Text("\(Int(nutritionData.macronutrientPercentages.carbs * 100))%")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.carbsColor)
-                    
-                    Text("碳水比例")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-        .padding(.vertical, 20)
-    }
-    
     // MARK: - Helper Functions
     
     private func addNutritionEntry(_ nutritionInfo: NutritionInfo) {
@@ -146,13 +97,6 @@ struct NewNutritionTrackerView: View {
                 nutrition: nutritionInfo
             )
             foodEntries.append(simplifiedEntry)
-            updateNutritionData()
-        }
-    }
-    
-    private func addMealEntry(_ entry: FoodLogEntry) {
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            foodEntries.append(entry)
             updateNutritionData()
         }
     }
