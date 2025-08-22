@@ -177,13 +177,6 @@ struct NutritionData {
         Double(caloriesConsumed) / Double(caloriesGoal)
     }
     
-    /// 計算總營養素攝取百分比用於圓環顯示
-    var totalNutrientProgress: Double {
-        let carbsPercent = carbs.progress
-        let proteinPercent = protein.progress
-        let fatPercent = fat.progress
-        return (carbsPercent + proteinPercent + fatPercent) / 3.0
-    }
     
     /// 計算三大營養素的熱量分佈
     var macronutrientCaloriesDistribution: (carbs: Int, protein: Int, fat: Int) {
@@ -191,22 +184,6 @@ struct NutritionData {
         let proteinCalories = protein.current * 4  // 1g 蛋白質 = 4 卡路里
         let fatCalories = fat.current * 9  // 1g 脂肪 = 9 卡路里
         return (carbsCalories, proteinCalories, fatCalories)
-    }
-    
-    /// 計算三大營養素的理想熱量分佈百分比
-    var macronutrientPercentages: (carbs: Double, protein: Double, fat: Double) {
-        let distribution = macronutrientCaloriesDistribution
-        let totalMacroCalories = distribution.carbs + distribution.protein + distribution.fat
-        
-        guard totalMacroCalories > 0 else {
-            return (0, 0, 0)
-        }
-        
-        let carbsPercent = Double(distribution.carbs) / Double(totalMacroCalories)
-        let proteinPercent = Double(distribution.protein) / Double(totalMacroCalories)
-        let fatPercent = Double(distribution.fat) / Double(totalMacroCalories)
-        
-        return (carbsPercent, proteinPercent, fatPercent)
     }
 }
 

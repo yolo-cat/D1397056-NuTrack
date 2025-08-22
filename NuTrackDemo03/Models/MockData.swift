@@ -8,144 +8,144 @@
 import Foundation
 
 extension MealItem {
-    /// 豐富多樣的 Mock 餐點資料
+    /// 簡化的 Mock 餐點資料 - 僅包含時間和營養素
     static let mockMeals: [MealItem] = [
         // 早餐類別 - 6項
         MealItem(
-            name: "煎蛋",
+            name: "",
             type: .breakfast,
             time: "07:30",
-            nutrition: NutritionInfo(calories: 155, carbs: 1, protein: 13, fat: 11)
+            nutrition: NutritionInfo(carbsGrams: 45, proteinGrams: 12, fatGrams: 8)
         ),
         MealItem(
-            name: "全麥吐司",
-            type: .breakfast,
-            time: "07:35",
-            nutrition: NutritionInfo(calories: 120, carbs: 22, protein: 4, fat: 2)
-        ),
-        MealItem(
-            name: "燕麥粥",
-            type: .breakfast,
-            time: "08:00",
-            nutrition: NutritionInfo(calories: 150, carbs: 27, protein: 5, fat: 3)
-        ),
-        MealItem(
-            name: "無糖豆漿",
-            type: .breakfast,
-            time: "08:00",
-            nutrition: NutritionInfo(calories: 80, carbs: 4, protein: 7, fat: 4)
-        ),
-        MealItem(
-            name: "希臘優格",
+            name: "",
             type: .breakfast,
             time: "07:45",
-            nutrition: NutritionInfo(calories: 130, carbs: 9, protein: 15, fat: 6)
+            nutrition: NutritionInfo(carbsGrams: 35, proteinGrams: 8, fatGrams: 5)
         ),
         MealItem(
-            name: "香蕉",
+            name: "",
+            type: .breakfast,
+            time: "08:00",
+            nutrition: NutritionInfo(carbsGrams: 50, proteinGrams: 10, fatGrams: 6)
+        ),
+        MealItem(
+            name: "",
             type: .breakfast,
             time: "08:15",
-            nutrition: NutritionInfo(calories: 105, carbs: 27, protein: 1, fat: 0)
+            nutrition: NutritionInfo(carbsGrams: 25, proteinGrams: 2, fatGrams: 1)
+        ),
+        MealItem(
+            name: "",
+            type: .breakfast,
+            time: "08:30",
+            nutrition: NutritionInfo(carbsGrams: 20, proteinGrams: 15, fatGrams: 12)
+        ),
+        MealItem(
+            name: "",
+            type: .breakfast,
+            time: "08:45",
+            nutrition: NutritionInfo(carbsGrams: 30, proteinGrams: 6, fatGrams: 3)
         ),
         
         // 午餐類別 - 8項
         MealItem(
-            name: "雞胸肉沙拉",
-            type: .lunch,
-            time: "12:30",
-            nutrition: NutritionInfo(calories: 300, carbs: 15, protein: 35, fat: 12)
-        ),
-        MealItem(
-            name: "蘑菇義大利麵",
-            type: .lunch,
-            time: "13:00",
-            nutrition: NutritionInfo(calories: 380, carbs: 45, protein: 15, fat: 16)
-        ),
-        MealItem(
-            name: "鮭魚壽司",
-            type: .lunch,
-            time: "12:45",
-            nutrition: NutritionInfo(calories: 250, carbs: 30, protein: 18, fat: 8)
-        ),
-        MealItem(
-            name: "火腿三明治",
-            type: .lunch,
-            time: "12:15",
-            nutrition: NutritionInfo(calories: 320, carbs: 35, protein: 20, fat: 12)
-        ),
-        MealItem(
-            name: "牛肉麵",
+            name: "",
             type: .lunch,
             time: "12:00",
-            nutrition: NutritionInfo(calories: 420, carbs: 50, protein: 25, fat: 18)
+            nutrition: NutritionInfo(carbsGrams: 25, proteinGrams: 35, fatGrams: 15)
         ),
         MealItem(
-            name: "蔬菜咖哩",
+            name: "",
+            type: .lunch,
+            time: "12:15",
+            nutrition: NutritionInfo(carbsGrams: 55, proteinGrams: 18, fatGrams: 20)
+        ),
+        MealItem(
+            name: "",
             type: .lunch,
             time: "12:30",
-            nutrition: NutritionInfo(calories: 280, carbs: 40, protein: 8, fat: 12)
+            nutrition: NutritionInfo(carbsGrams: 40, proteinGrams: 22, fatGrams: 12)
         ),
         MealItem(
-            name: "鮪魚沙拉",
+            name: "",
             type: .lunch,
             time: "12:45",
-            nutrition: NutritionInfo(calories: 220, carbs: 8, protein: 25, fat: 10)
+            nutrition: NutritionInfo(carbsGrams: 45, proteinGrams: 20, fatGrams: 10)
         ),
         MealItem(
-            name: "糙米便當",
+            name: "",
+            type: .lunch,
+            time: "13:00",
+            nutrition: NutritionInfo(carbsGrams: 60, proteinGrams: 25, fatGrams: 18)
+        ),
+        MealItem(
+            name: "",
             type: .lunch,
             time: "13:15",
-            nutrition: NutritionInfo(calories: 450, carbs: 65, protein: 20, fat: 15)
+            nutrition: NutritionInfo(carbsGrams: 50, proteinGrams: 12, fatGrams: 15)
+        ),
+        MealItem(
+            name: "",
+            type: .lunch,
+            time: "13:30",
+            nutrition: NutritionInfo(carbsGrams: 15, proteinGrams: 30, fatGrams: 12)
+        ),
+        MealItem(
+            name: "",
+            type: .lunch,
+            time: "13:45",
+            nutrition: NutritionInfo(carbsGrams: 70, proteinGrams: 22, fatGrams: 16)
         ),
         
         // 晚餐類別 - 8項
         MealItem(
-            name: "香煎鮭魚",
-            type: .dinner,
-            time: "18:30",
-            nutrition: NutritionInfo(calories: 350, carbs: 2, protein: 40, fat: 20)
-        ),
-        MealItem(
-            name: "牛排配蔬菜",
-            type: .dinner,
-            time: "19:00",
-            nutrition: NutritionInfo(calories: 450, carbs: 12, protein: 45, fat: 25)
-        ),
-        MealItem(
-            name: "蒸蛋",
-            type: .dinner,
-            time: "18:15",
-            nutrition: NutritionInfo(calories: 180, carbs: 3, protein: 15, fat: 12)
-        ),
-        MealItem(
-            name: "烤雞腿",
-            type: .dinner,
-            time: "19:30",
-            nutrition: NutritionInfo(calories: 320, carbs: 0, protein: 35, fat: 18)
-        ),
-        MealItem(
-            name: "蒸蔬菜",
-            type: .dinner,
-            time: "18:45",
-            nutrition: NutritionInfo(calories: 80, carbs: 15, protein: 3, fat: 1)
-        ),
-        MealItem(
-            name: "味噌湯",
-            type: .dinner,
-            time: "19:15",
-            nutrition: NutritionInfo(calories: 45, carbs: 5, protein: 3, fat: 1)
-        ),
-        MealItem(
-            name: "烤豆腐",
+            name: "",
             type: .dinner,
             time: "18:00",
-            nutrition: NutritionInfo(calories: 180, carbs: 4, protein: 18, fat: 10)
+            nutrition: NutritionInfo(carbsGrams: 8, proteinGrams: 40, fatGrams: 22)
         ),
         MealItem(
-            name: "海鮮湯",
+            name: "",
+            type: .dinner,
+            time: "18:15",
+            nutrition: NutritionInfo(carbsGrams: 15, proteinGrams: 45, fatGrams: 28)
+        ),
+        MealItem(
+            name: "",
+            type: .dinner,
+            time: "18:30",
+            nutrition: NutritionInfo(carbsGrams: 5, proteinGrams: 18, fatGrams: 14)
+        ),
+        MealItem(
+            name: "",
+            type: .dinner,
+            time: "18:45",
+            nutrition: NutritionInfo(carbsGrams: 2, proteinGrams: 38, fatGrams: 20)
+        ),
+        MealItem(
+            name: "",
+            type: .dinner,
+            time: "19:00",
+            nutrition: NutritionInfo(carbsGrams: 20, proteinGrams: 6, fatGrams: 2)
+        ),
+        MealItem(
+            name: "",
+            type: .dinner,
+            time: "19:15",
+            nutrition: NutritionInfo(carbsGrams: 8, proteinGrams: 5, fatGrams: 1)
+        ),
+        MealItem(
+            name: "",
+            type: .dinner,
+            time: "19:30",
+            nutrition: NutritionInfo(carbsGrams: 6, proteinGrams: 20, fatGrams: 12)
+        ),
+        MealItem(
+            name: "",
             type: .dinner,
             time: "19:45",
-            nutrition: NutritionInfo(calories: 200, carbs: 8, protein: 25, fat: 8)
+            nutrition: NutritionInfo(carbsGrams: 10, proteinGrams: 28, fatGrams: 9)
         )
     ]
 }
