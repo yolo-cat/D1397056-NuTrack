@@ -27,19 +27,9 @@ enum TimeBasedCategory: String, CaseIterable {
     }
     
     /// 統一的時間分類方法
-    static func categorize(time: String) -> TimeBasedCategory {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        
-        guard let mealTime = formatter.date(from: time) else {
-            return .breakfast // 無法解析時間時預設為早餐
-        }
-        
-        formatter.dateFormat = "HH"
-        let hourString = formatter.string(from: mealTime)
-        guard let hour = Int(hourString) else {
-            return .breakfast
-        }
+    static func categorize(from timestamp: Int64) -> TimeBasedCategory {
+        let date = Date(timeIntervalSince1970: TimeInterval(timestamp) / 1000)
+        let hour = Calendar.current.component(.hour, from: date)
         
         switch hour {
         case 0..<6:
@@ -82,51 +72,29 @@ struct NutritionInfo {
     }
 }
 
-/// 餐點類型列舉
-enum MealType: String, CaseIterable {
-    case breakfast = "早餐"
-    case lunch = "午餐"
-    case dinner = "晚餐"
-    
-    var icon: String {
-        switch self {
-        case .breakfast: return "sunrise.fill"
-        case .lunch: return "sun.max.fill"
-        case .dinner: return "moon.fill"
-        }
-    }
-}
-
 /// 餐點資訊結構
 struct MealItem: Identifiable {
-    let id: String // 使用精確到毫秒的時間戳作為唯一識別
+    let id: String
     let name: String
-    let type: MealType
-    let time: String
+    let timestamp: Int64
     let nutrition: NutritionInfo
-    private let createdAt: Date // 記錄創建的精確時間
     
-    init(name: String, type: MealType, time: String, nutrition: NutritionInfo) {
-        self.createdAt = Date()
-        // 使用精確到毫秒的時間戳作為唯一識別
-        let timeInterval = self.createdAt.timeIntervalSince1970
-        let milliseconds = Int(timeInterval * 1000)
-        self.id = "\(time)_\(milliseconds)"
-        
+    init(id: String, name: String, timestamp: Int64, nutrition: NutritionInfo) {
+        self.id = id
         self.name = name
-        self.type = type
-        self.time = time
+        self.timestamp = timestamp
         self.nutrition = nutrition
     }
     
     /// 顯示名稱：優先使用記錄時間，而不是餐點名稱
     var displayName: String {
-        return "記錄於 \(time)"
+        let date = Date(timeIntervalSince1970: TimeInterval(timestamp) / 1000)
+        return DateFormatter.HHmm.string(from: date)
     }
     
     /// 時段分類的計算屬性 - 使用統一方法
     var timeBasedCategory: TimeBasedCategory {
-        return TimeBasedCategory.categorize(time: time)
+        return TimeBasedCategory.categorize(from: timestamp)
     }
 }
 
@@ -160,70 +128,17 @@ struct NutrientData {
     }
 }
 
-/// 主要營養資料結構
-struct NutritionData {
-    var caloriesConsumed: Int
-    var caloriesBurned: Int
-    var caloriesGoal: Int
-    var carbs: NutrientData
-    var protein: NutrientData
-    var fat: NutrientData
-    
-    var remainingCalories: Int {
-        caloriesGoal - caloriesConsumed + caloriesBurned
-    }
-    
-    var calorieProgress: Double {
-        Double(caloriesConsumed) / Double(caloriesGoal)
-    }
-    
-    
-    /// 計算三大營養素的熱量分佈
-    var macronutrientCaloriesDistribution: (carbs: Int, protein: Int, fat: Int) {
-        let carbsCalories = carbs.current * 4  // 1g 碳水化合物 = 4 卡路里
-        let proteinCalories = protein.current * 4  // 1g 蛋白質 = 4 卡路里
-        let fatCalories = fat.current * 9  // 1g 脂肪 = 9 卡路里
-        return (carbsCalories, proteinCalories, fatCalories)
-    }
-    
-    /// 計算三大營養素的理想熱量分佈百分比
-    var macronutrientPercentages: (carbs: Double, protein: Double, fat: Double) {
-        let distribution = macronutrientCaloriesDistribution
-        let totalMacroCalories = distribution.carbs + distribution.protein + distribution.fat
-        
-        guard totalMacroCalories > 0 else {
-            return (0, 0, 0)
-        }
-        
-        let carbsPercent = Double(distribution.carbs) / Double(totalMacroCalories)
-        let proteinPercent = Double(distribution.protein) / Double(totalMacroCalories)
-        let fatPercent = Double(distribution.fat) / Double(totalMacroCalories)
-        
-        return (carbsPercent, proteinPercent, fatPercent)
-    }
-}
-
 /// 今日食物記錄條目
 struct FoodLogEntry: Identifiable {
     let id = UUID()
-    let time: String
+    let timestamp: Int64
     let meals: [MealItem]?
-    let type: MealType?
     let nutrition: NutritionInfo?
     
-    // 舊版建構子：基於餐點
-    init(time: String, meals: [MealItem], type: MealType) {
-        self.time = time
-        self.meals = meals
-        self.type = type
-        self.nutrition = nil
-    }
-    
     // 新版建構子：直接營養記錄
-    init(time: String, nutrition: NutritionInfo) {
-        self.time = time
+    init(timestamp: Int64, nutrition: NutritionInfo) {
+        self.timestamp = timestamp
         self.meals = nil
-        self.type = nil
         self.nutrition = nutrition
     }
     
@@ -263,21 +178,8 @@ struct FoodLogEntry: Identifiable {
         return 0
     }
     
-    var caloriePercentage: Int {
-        Int(Double(totalCalories) / Double(DailyGoal.standard.calories) * 100)
-    }
-    
-    var description: String {
-        if let meals = meals {
-            return meals.map { $0.displayName }.joined(separator: " + ")
-        } else if let nutrition = nutrition {
-            return "營養記錄"
-        }
-        return "未知記錄"
-    }
-    
     /// 使用統一的時段分類方法
     var timeBasedCategory: TimeBasedCategory {
-        return TimeBasedCategory.categorize(time: time)
+        return TimeBasedCategory.categorize(from: timestamp)
     }
 }
