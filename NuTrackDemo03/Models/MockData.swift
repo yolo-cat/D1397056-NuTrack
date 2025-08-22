@@ -7,121 +7,162 @@
 
 import Foundation
 
+// MARK: - 時段分類枚舉
+enum TimeBasedCategory: String, CaseIterable {
+    case lateNight = "深夜"      // 00:00 - 05:59
+    case breakfast = "早餐"      // 06:00 - 10:59
+    case lunch = "午餐"          // 11:00 - 15:59
+    case dinner = "晚餐"         // 16:00 - 21:59
+    case midnightSnack = "宵夜"  // 22:00 - 23:59
+    
+    var icon: String {
+        switch self {
+        case .lateNight: return "moon.zzz.fill"
+        case .breakfast: return "sunrise.fill"
+        case .lunch: return "sun.max.fill"
+        case .dinner: return "sunset.fill"
+        case .midnightSnack: return "moon.fill"
+        }
+    }
+}
+
 extension MealItem {
     /// 豐富多樣的 Mock 餐點資料
     static let mockMeals: [MealItem] = [
-        // 早餐時段 (05:00-10:59) - 6項
+        // 早餐類別 - 6項
         MealItem(
             name: "煎蛋",
+            type: .breakfast,
             time: "07:30",
             nutrition: NutritionInfo(calories: 155, carbs: 1, protein: 13, fat: 11)
         ),
         MealItem(
             name: "全麥吐司",
+            type: .breakfast,
             time: "07:35",
             nutrition: NutritionInfo(calories: 120, carbs: 22, protein: 4, fat: 2)
         ),
         MealItem(
             name: "燕麥粥",
+            type: .breakfast,
             time: "08:00",
             nutrition: NutritionInfo(calories: 150, carbs: 27, protein: 5, fat: 3)
         ),
         MealItem(
             name: "無糖豆漿",
+            type: .breakfast,
             time: "08:00",
             nutrition: NutritionInfo(calories: 80, carbs: 4, protein: 7, fat: 4)
         ),
         MealItem(
             name: "希臘優格",
+            type: .breakfast,
             time: "07:45",
             nutrition: NutritionInfo(calories: 130, carbs: 9, protein: 15, fat: 6)
         ),
         MealItem(
             name: "香蕉",
+            type: .breakfast,
             time: "08:15",
             nutrition: NutritionInfo(calories: 105, carbs: 27, protein: 1, fat: 0)
         ),
         
-        // 午餐時段 (11:00-15:59) - 8項
+        // 午餐類別 - 8項
         MealItem(
             name: "雞胸肉沙拉",
+            type: .lunch,
             time: "12:30",
             nutrition: NutritionInfo(calories: 300, carbs: 15, protein: 35, fat: 12)
         ),
         MealItem(
             name: "蘑菇義大利麵",
+            type: .lunch,
             time: "13:00",
             nutrition: NutritionInfo(calories: 380, carbs: 45, protein: 15, fat: 16)
         ),
         MealItem(
             name: "鮭魚壽司",
+            type: .lunch,
             time: "12:45",
             nutrition: NutritionInfo(calories: 250, carbs: 30, protein: 18, fat: 8)
         ),
         MealItem(
             name: "火腿三明治",
+            type: .lunch,
             time: "12:15",
             nutrition: NutritionInfo(calories: 320, carbs: 35, protein: 20, fat: 12)
         ),
         MealItem(
             name: "牛肉麵",
+            type: .lunch,
             time: "12:00",
             nutrition: NutritionInfo(calories: 420, carbs: 50, protein: 25, fat: 18)
         ),
         MealItem(
             name: "蔬菜咖哩",
+            type: .lunch,
             time: "12:30",
             nutrition: NutritionInfo(calories: 280, carbs: 40, protein: 8, fat: 12)
         ),
         MealItem(
             name: "鮪魚沙拉",
+            type: .lunch,
             time: "12:45",
             nutrition: NutritionInfo(calories: 220, carbs: 8, protein: 25, fat: 10)
         ),
         MealItem(
             name: "糙米便當",
+            type: .lunch,
             time: "13:15",
             nutrition: NutritionInfo(calories: 450, carbs: 65, protein: 20, fat: 15)
         ),
         
-        // 晚餐時段 (16:00-22:59) - 8項
+        // 晚餐類別 - 8項
         MealItem(
             name: "香煎鮭魚",
+            type: .dinner,
             time: "18:30",
             nutrition: NutritionInfo(calories: 350, carbs: 2, protein: 40, fat: 20)
         ),
         MealItem(
             name: "牛排配蔬菜",
+            type: .dinner,
             time: "19:00",
             nutrition: NutritionInfo(calories: 450, carbs: 12, protein: 45, fat: 25)
         ),
         MealItem(
             name: "蒸蛋",
+            type: .dinner,
             time: "18:15",
             nutrition: NutritionInfo(calories: 180, carbs: 3, protein: 15, fat: 12)
         ),
         MealItem(
             name: "烤雞腿",
+            type: .dinner,
             time: "19:30",
             nutrition: NutritionInfo(calories: 320, carbs: 0, protein: 35, fat: 18)
         ),
         MealItem(
             name: "蒸蔬菜",
+            type: .dinner,
             time: "18:45",
             nutrition: NutritionInfo(calories: 80, carbs: 15, protein: 3, fat: 1)
         ),
         MealItem(
             name: "味噌湯",
+            type: .dinner,
             time: "19:15",
             nutrition: NutritionInfo(calories: 45, carbs: 5, protein: 3, fat: 1)
         ),
         MealItem(
             name: "烤豆腐",
+            type: .dinner,
             time: "18:00",
             nutrition: NutritionInfo(calories: 180, carbs: 4, protein: 18, fat: 10)
         ),
         MealItem(
             name: "海鮮湯",
+            type: .dinner,
             time: "19:45",
             nutrition: NutritionInfo(calories: 200, carbs: 8, protein: 25, fat: 8)
         )
@@ -156,12 +197,14 @@ struct FoodLogEntry: Identifiable {
     let id = UUID()
     let time: String
     let meals: [MealItem]?
+    let type: MealType?
     let nutrition: NutritionInfo?
     
-    // 新版建構子：基於餐點
-    init(time: String, meals: [MealItem]) {
+    // 舊版建構子：基於餐點
+    init(time: String, meals: [MealItem], type: MealType) {
         self.time = time
         self.meals = meals
+        self.type = type
         self.nutrition = nil
     }
     
@@ -169,12 +212,8 @@ struct FoodLogEntry: Identifiable {
     init(time: String, nutrition: NutritionInfo) {
         self.time = time
         self.meals = nil
+        self.type = nil
         self.nutrition = nutrition
-    }
-    
-    /// 基於時間自動分類的餐點類型
-    var timeBasedCategory: TimeBasedMealCategory {
-        return TimeBasedMealCategory.category(from: time)
     }
     
     var totalCalories: Int {
@@ -219,11 +258,39 @@ struct FoodLogEntry: Identifiable {
     
     var description: String {
         if let meals = meals {
-            return meals.map { $0.name }.joined(separator: " + ")
+            return meals.map { $0.displayName }.joined(separator: " + ")
         } else if let nutrition = nutrition {
             return "營養記錄"
         }
         return "未知記錄"
+    }
+    
+    var timeBasedCategory: TimeBasedCategory {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        
+        guard let mealTime = formatter.date(from: time) else {
+            return .breakfast // 無法解析時間時預設為早餐
+        }
+        
+        formatter.dateFormat = "HH"
+        let hourString = formatter.string(from: mealTime)
+        guard let hour = Int(hourString) else {
+            return .breakfast
+        }
+        
+        switch hour {
+        case 0..<6:
+            return .lateNight
+        case 6..<11:
+            return .breakfast
+        case 11..<16:
+            return .lunch
+        case 16..<22:
+            return .dinner
+        default:
+            return .midnightSnack
+        }
     }
 }
 
@@ -232,15 +299,18 @@ extension FoodLogEntry {
     static let todayEntries: [FoodLogEntry] = [
         FoodLogEntry(
             time: "07:30",
-            meals: Array(MealItem.mockMeals.filter { $0.timeBasedCategory == .breakfast }.prefix(2))
+            meals: Array(MealItem.mockMeals.filter { $0.type == .breakfast }.prefix(2)),
+            type: .breakfast
         ),
         FoodLogEntry(
             time: "12:30",
-            meals: Array(MealItem.mockMeals.filter { $0.timeBasedCategory == .lunch }.prefix(2))
+            meals: Array(MealItem.mockMeals.filter { $0.type == .lunch }.prefix(2)),
+            type: .lunch
         ),
         FoodLogEntry(
             time: "18:30",
-            meals: Array(MealItem.mockMeals.filter { $0.timeBasedCategory == .dinner }.prefix(1))
+            meals: Array(MealItem.mockMeals.filter { $0.type == .dinner }.prefix(1)),
+            type: .dinner
         )
     ]
 }

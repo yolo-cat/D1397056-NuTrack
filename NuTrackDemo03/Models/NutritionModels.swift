@@ -34,68 +34,75 @@ struct NutritionInfo {
     }
 }
 
-/// 基於時間的餐點分類列舉
-enum TimeBasedMealCategory: String, CaseIterable {
-    case lateNight = "凌晨"        // 00:00-04:59
-    case breakfast = "早餐時段"    // 05:00-10:59
-    case lunch = "午餐時段"        // 11:00-15:59
-    case dinner = "晚餐時段"       // 16:00-22:59
-    case midnightSnack = "夜宵時段" // 23:00-23:59
+/// 餐點類型列舉
+enum MealType: String, CaseIterable {
+    case breakfast = "早餐"
+    case lunch = "午餐"
+    case dinner = "晚餐"
     
     var icon: String {
         switch self {
-        case .lateNight: return "moon.stars.fill"
         case .breakfast: return "sunrise.fill"
         case .lunch: return "sun.max.fill"
-        case .dinner: return "sunset.fill"
-        case .midnightSnack: return "moon.fill"
-        }
-    }
-    
-    /// 從時間字串 (HH:mm 格式) 解析出對應的餐點分類
-    static func category(from timeString: String) -> TimeBasedMealCategory {
-        // 解析時間字串，期待 "HH:mm" 格式
-        let components = timeString.split(separator: ":")
-        guard components.count == 2,
-              let hour = Int(components[0]),
-              hour >= 0 && hour <= 23 else {
-            // 預設返回早餐時段
-            return .breakfast
-        }
-        
-        switch hour {
-        case 0...4:
-            return .lateNight
-        case 5...10:
-            return .breakfast
-        case 11...15:
-            return .lunch
-        case 16...22:
-            return .dinner
-        case 23:
-            return .midnightSnack
-        default:
-            return .breakfast
+        case .dinner: return "moon.fill"
         }
     }
 }
 
 /// 餐點資訊結構
 struct MealItem: Identifiable {
-    let id = UUID()
+    let id: String // 使用精確到毫秒的時間戳作為唯一識別
     let name: String
+    let type: MealType
     let time: String
     let nutrition: NutritionInfo
+    private let createdAt: Date // 記錄創建的精確時間
     
-    init(name: String, time: String, nutrition: NutritionInfo) {
+    init(name: String, type: MealType, time: String, nutrition: NutritionInfo) {
+        self.createdAt = Date()
+        // 使用精確到毫秒的時間戳作為唯一識別
+        let timeInterval = self.createdAt.timeIntervalSince1970
+        let milliseconds = Int(timeInterval * 1000)
+        self.id = "\(time)_\(milliseconds)"
+        
         self.name = name
+        self.type = type
         self.time = time
         self.nutrition = nutrition
     }
     
-    /// 基於時間自動分類的餐點類型
-    var timeBasedCategory: TimeBasedMealCategory {
-        return TimeBasedMealCategory.category(from: time)
+    /// 顯示名稱：優先使用記錄時間，而不是餐點名稱
+    var displayName: String {
+        return "記錄於 \(time)"
+    }
+    
+    /// 時段分類的計算屬性
+    var timeBasedCategory: TimeBasedCategory {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        
+        guard let mealTime = formatter.date(from: time) else {
+            return .breakfast // 無法解析時間時預設為早餐
+        }
+        
+        formatter.dateFormat = "HH"
+        let hourString = formatter.string(from: mealTime)
+        guard let hour = Int(hourString) else {
+            return .breakfast
+        }
+        
+        switch hour {
+        case 0..<6:
+            return .lateNight
+        case 6..<11:
+            return .breakfast
+        case 11..<16:
+            return .lunch
+        case 16..<22:
+            return .dinner
+        default:
+            return .midnightSnack
+        }
     }
 }
 
@@ -121,8 +128,7 @@ struct NutrientData {
     var unit: String
     
     var progress: Double {
-        guard goal > 0 else { return 0.0 }
-        return Double(current) / Double(goal)
+        Double(current) / Double(goal)
     }
     
     var percentage: Int {

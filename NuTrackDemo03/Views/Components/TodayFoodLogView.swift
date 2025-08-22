@@ -98,12 +98,6 @@ struct FoodEntryRowView: View {
                     Text("\(entry.totalCalories) 卡路里")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Text("佔 \(entry.caloriePercentage)%")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
             }
             
