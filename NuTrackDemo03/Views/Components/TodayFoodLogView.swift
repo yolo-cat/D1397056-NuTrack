@@ -20,8 +20,7 @@ enum TimeBasedCategory: String, CaseIterable {
     }
     
     /// 統一的時間分類方法
-    static func categorize(from timestamp: Int64) -> TimeBasedCategory {
-        let date = Date(timeIntervalSince1970: TimeInterval(timestamp) / 1000)
+    static func categorize(from date: Date) -> TimeBasedCategory {
         let hour = Calendar.current.component(.hour, from: date)
         
         switch hour {
@@ -49,7 +48,7 @@ enum TimeBasedCategory: String, CaseIterable {
 import SwiftUI
 
 struct TodayFoodLogView: View {
-    let foodEntries: [FoodLogEntry]
+    let foodEntries: [MealEntry]
     @State private var animatedItems: Set<UUID> = []
     
     var body: some View {
@@ -98,7 +97,7 @@ struct TodayFoodLogView: View {
 }
 
 struct FoodEntryRowView: View {
-    let entry: FoodLogEntry
+    let entry: MealEntry
     
     var body: some View {
         HStack(spacing: 12) {
@@ -114,7 +113,7 @@ struct FoodEntryRowView: View {
                         .foregroundColor(entryColor)
                     
                     // 新增時段標籤
-                    Text(entry.timeBasedCategory.rawValue)
+                    Text(timeBasedCategory.rawValue)
                         .font(.caption2)
                         .fontWeight(.light)
                         .foregroundColor(entryColor.opacity(0.8))
@@ -124,14 +123,14 @@ struct FoodEntryRowView: View {
             
             // Food description
             VStack(alignment: .leading, spacing: 4) {
-                Text(entry.time)
+                Text(timeText)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(2)
                     .foregroundColor(.primary)
                 
                 HStack {
-                    Text("\(entry.totalCalories) 卡路里")
+                    Text("\(entry.calories) 卡路里")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -140,7 +139,7 @@ struct FoodEntryRowView: View {
             Spacer()
             
             // Percentage badge
-            Text(/*"\(entry.caloriePercentage)%"+*/"Mock")
+            Text("\(entry.carbs)g")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
@@ -156,40 +155,39 @@ struct FoodEntryRowView: View {
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
     
+    private var timeBasedCategory: TimeBasedCategory {
+        return TimeBasedCategory.categorize(from: entry.timestamp)
+    }
+    
+    private var timeText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: entry.timestamp)
+    }
+    
     private var entryColor: Color {
-        let category = entry.timeBasedCategory
-        switch category {
+        switch timeBasedCategory {
         case .lateNight: return .purple
-        case .breakfast: return .accentOrange
-        case .lunch: return .primaryBlue
-        case .dinner: return .fatColor
+        case .breakfast: return .orange
+        case .lunch: return .blue
+        case .dinner: return .red
         case .midnightSnack: return .indigo
         }
     }
     
     private var entryIcon: String {
-        return entry.timeBasedCategory.icon
-    }
-}
-
-// MARK: - Animation Helper Extension
-
-extension View {
-    func animateOnAppear(delay: Double = 0) -> some View {
-        self.scaleEffect(0.8)
-            .opacity(0)
-            .onAppear {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0).delay(delay)) {
-                    // Animation will be handled by the parent view
-                }
-            }
+        return timeBasedCategory.icon
     }
 }
 
 #Preview {
     ScrollView {
         VStack {
-            TodayFoodLogView(foodEntries: FoodLogEntry.todayEntries)
+            TodayFoodLogView(foodEntries: [
+                MealEntry(timestamp: Date().addingTimeInterval(-3600), carbs: 50, protein: 20, fat: 10),
+                MealEntry(timestamp: Date(), carbs: 70, protein: 30, fat: 15),
+                MealEntry(timestamp: Date().addingTimeInterval(3600), carbs: 30, protein: 10, fat: 5)
+            ])
                 .padding()
             
             Spacer(minLength: 100)
