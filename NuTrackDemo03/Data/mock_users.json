@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "E621E1F8-C36C-495A-93FC-0C247A3E6E5F",
+    "name": "張小明",
+    "weightInKg": 70.0
+  },
+  {
+    "id": "0A74A100-4E34-4B2A-98F1-B47E3D9C2A84",
+    "name": "李小華",
+    "weightInKg": 65.0
+  }
+]
