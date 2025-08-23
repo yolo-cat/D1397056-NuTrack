@@ -46,8 +46,14 @@ final class DataSeedingService {
         print("資料庫為空，開始填充種子資料...")
         
         // 2. 載入並解碼 JSON 資料
-        guard let users: [MockUser] = load("mock_users.json") else { return }
-        guard let mealData: MockMealData = load("mock_meals.json") else { return }
+        guard let users: [MockUser] = load("mock_users.json") else { 
+            print("無法載入用戶數據，跳過種子資料填充")
+            return 
+        }
+        guard let mealData: MockMealData = load("mock_meals.json") else { 
+            print("無法載入餐點數據，跳過種子資料填充")
+            return 
+        }
         
         // 3. 轉換並插入 UserProfile
         var userProfileMap: [UUID: UserProfile] = [:]

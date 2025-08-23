@@ -11,6 +11,7 @@ import SwiftData
 @main
 struct NuTrackDemo03App: App {
     @State private var currentUser: UserProfile?
+    @State private var hasSeededDatabase = false
     
     private let modelContainer: ModelContainer
 
@@ -40,18 +41,25 @@ struct NuTrackDemo03App: App {
                 } else {
                     SimpleLoginView(onLoginSuccess: { userID in
                         let modelContext = modelContainer.mainContext
-                        let user = try? modelContext.fetch(FetchDescriptor<UserProfile>(predicate: #Predicate<UserProfile> { $0.id == userID })).first
-                        withAnimation {
-                            currentUser = user
+                        do {
+                            let user = try modelContext.fetch(FetchDescriptor<UserProfile>(predicate: #Predicate<UserProfile> { $0.id == userID })).first
+                            withAnimation {
+                                currentUser = user
+                            }
+                        } catch {
+                            print("獲取用戶時發生錯誤: \(error.localizedDescription)")
                         }
                     })
                 }
             }
             .animation(.easeInOut(duration: 0.4), value: currentUser?.id)
             .onAppear {
-                // 在 UI 出現後執行數據種子填充，避免阻塞 App 啟動
-                Task { @MainActor in
-                    DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
+                // 在 UI 出現後執行數據種子填充，避免阻塞 App 啟動，但只執行一次
+                if !hasSeededDatabase {
+                    hasSeededDatabase = true
+                    Task { @MainActor in
+                        DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
+                    }
                 }
             }
         }
