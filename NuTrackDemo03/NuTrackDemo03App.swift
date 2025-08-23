@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct NuTrackDemo03App: App {
@@ -24,6 +25,7 @@ struct NuTrackDemo03App: App {
             }
             .animation(.easeInOut(duration: 0.3), value: userManager.isLoggedIn)
         }
+        .modelContainer(for: [UserProfile.self, MealEntry.self])
     }
 }
 
