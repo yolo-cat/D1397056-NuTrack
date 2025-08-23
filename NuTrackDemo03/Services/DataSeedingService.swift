@@ -78,7 +78,7 @@ final class DataSeedingService {
             // 建立 UserProfile 和 MealEntry 之間的雙向關聯
             mealEntry.user = userProfile
             // SwiftData 會自動處理反向關聯，但如果模型中有定義，也可以手動添加
-            // userProfile.mealEntries.append(mealEntry) 
+            // userProfile.mealEntries.append(mealEntry)
         }
         
         // 5. 儲存變更
