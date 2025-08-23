@@ -10,35 +10,56 @@ import SwiftData
 
 @main
 struct NuTrackDemo03App: App {
-    @StateObject private var userManager = SimpleUserManager()
+    @State private var currentUser: UserProfile?
+    
+    private let modelContainer: ModelContainer
+
+    init() {
+        do {
+            modelContainer = try ModelContainer(for: UserProfile.self, MealEntry.self)
+            Task { @MainActor in
+                DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
+            }
+        } catch {
+            fatalError("無法建立 ModelContainer: \(error)")
+        }
+    }
     
     var body: some Scene {
         WindowGroup {
             Group {
-                if userManager.isLoggedIn {
-                    // 主應用程式介面
-                    MainAppView(userManager: userManager)
+                if let user = currentUser {
+                    MainAppView(user: user, onLogout: {
+                        withAnimation {
+                            currentUser = nil
+                        }
+                    })
                 } else {
-                    // 登入頁面
-                    SimpleLoginView(userManager: userManager)
+                    SimpleLoginView(onLoginSuccess: { user in
+                        withAnimation {
+                            currentUser = user
+                        }
+                    })
                 }
             }
-            .animation(.easeInOut(duration: 0.3), value: userManager.isLoggedIn)
+            .animation(.easeInOut(duration: 0.4), value: currentUser?.id)
         }
-        .modelContainer(for: [UserProfile.self, MealEntry.self])
+        .modelContainer(modelContainer)
     }
 }
 
 /// 主應用程式介面包裝器
 struct MainAppView: View {
-    @ObservedObject var userManager: SimpleUserManager
+    let user: UserProfile
+    let onLogout: () -> Void
     
     var body: some View {
-        NewNutritionTrackerView(userManager: userManager)
+        // NewNutritionTrackerView 也需要被重構以接收 UserProfile
+        NewNutritionTrackerView(user: user)
             .onShake {
                 // 開發用：搖動裝置可以登出
                 #if DEBUG
-                userManager.logout()
+                onLogout()
                 #endif
             }
     }
