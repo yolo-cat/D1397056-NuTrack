@@ -35,19 +35,21 @@ struct NewNutritionTrackerView: View {
         let totalCarbs = mealEntries.reduce(0) { $0 + $1.carbs }
         let totalProtein = mealEntries.reduce(0) { $0 + $1.protein }
         let totalFat = mealEntries.reduce(0) { $0 + $1.fat }
-        let totalCalories = mealEntries.reduce(0) { $0 + $1.calories }
-        
+
+        let carbCalories = totalCarbs * 4
+        let proteinCalories = totalProtein * 4
+        let fatCalories = totalFat * 9
+
         return NutritionData(
-            caloriesConsumed: totalCalories,
-            caloriesGoal: user.dailyCalorieGoal,
             carbs: .init(current: totalCarbs, goal: user.dailyCarbsGoal, unit: "g"),
             protein: .init(current: totalProtein, goal: user.dailyProteinGoal, unit: "g"),
-            fat: .init(current: totalFat, goal: user.dailyFatGoal, unit: "g")
+            fat: .init(current: totalFat, goal: user.dailyFatGoal, unit: "g"),
+            macronutrientCaloriesDistribution: .init(carbs: carbCalories, protein: proteinCalories, fat: fatCalories)
         )
     }
     
-    private var foodLogEntries: [FoodLogEntry] {
-        mealEntries.map { FoodLogEntry(mealEntry: $0) }
+    private var foodLogEntries: [MealEntry] {
+        return mealEntries
     }
     
     // MARK: - Main Body
@@ -112,20 +114,7 @@ struct NewNutritionTrackerView: View {
     }
 }
 
-// MARK: - FoodLogEntry Extension
-// 讓 FoodLogEntry 可以直接從 MealEntry 初始化，作為一個轉接層
-extension FoodLogEntry {
-    init(mealEntry: MealEntry) {
-        self.init(
-            timestamp: Int64(mealEntry.timestamp.timeIntervalSince1970 * 1000),
-            nutrition: .init(
-                carbsGrams: mealEntry.carbs,
-                proteinGrams: mealEntry.protein,
-                fatGrams: mealEntry.fat
-            )
-        )
-    }
-}
+
 
 
 #Preview {

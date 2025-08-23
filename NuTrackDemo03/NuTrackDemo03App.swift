@@ -17,6 +17,7 @@ struct NuTrackDemo03App: App {
     init() {
         do {
             modelContainer = try ModelContainer(for: UserProfile.self, MealEntry.self)
+            let modelContainer = self.modelContainer
             Task { @MainActor in
                 DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
             }

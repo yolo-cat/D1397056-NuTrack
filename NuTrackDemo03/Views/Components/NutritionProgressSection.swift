@@ -1,31 +1,4 @@
 //
-//  NutritionModels.swift
-//  SwiftUIDemo
-//
-//  Created by NuTrack on 2024/7/31.
-//
-
-import SwiftUI
-import Foundation
-
-// MARK: - View-Specific Models
-
-/// 營養素資料結構
-struct NutrientData {
-    var current: Int
-    var goal: Int
-    var unit: String
-    
-    var progress: Double {
-        Double(current) / Double(goal)
-    }
-    
-    var percentage: Int {
-        Int(progress * 100)
-    }
-}
-
-//
 //  NutritionProgressSection.swift
 //  SwiftUIDemo
 //
@@ -97,7 +70,7 @@ struct NutritionProgressSection: View {
 
 struct NutritionProgressBar: View {
     let title: String
-    let nutrientData: NutrientData
+    let nutrientData: NutritionData.Nutrient
     let calorieInfo: Int
     let color: Color
     let showProgress: Bool

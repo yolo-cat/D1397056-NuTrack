@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct AddNutritionView: View {
+    @State private var nameInput: String = ""
     @State private var carbsInput: String = ""
     @State private var proteinInput: String = ""
     @State private var fatInput: String = ""
@@ -26,6 +27,9 @@ struct AddNutritionView: View {
                     VStack(spacing: 24) {
                         // Header
                         headerSection
+                        
+                        // Meal name input
+                        mealNameSection
                         
                         // Nutrition input fields
                         nutritionInputSection
@@ -85,6 +89,24 @@ struct AddNutritionView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 20)
+    }
+    
+    private var mealNameSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("餐點名稱 (選填)")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.primary)
+            
+            TextField("例如：雞胸肉沙拉", text: $nameInput)
+                .font(.body)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.white)
+                .cornerRadius(8)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        }
+        .padding(.horizontal, 20)
     }
     
     private var nutritionInputSection: some View {
@@ -225,9 +247,10 @@ struct AddNutritionView: View {
         guard isInputValid else { return }
         
         let nutritionInfo = NutritionInfo(
-            carbsGrams: carbsGrams,
-            proteinGrams: proteinGrams,
-            fatGrams: fatGrams
+            name: nameInput,
+            carbs: carbsGrams,
+            protein: proteinGrams,
+            fat: fatGrams
         )
         
         onNutritionAdded(nutritionInfo)

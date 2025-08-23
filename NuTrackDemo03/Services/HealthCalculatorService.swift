@@ -60,4 +60,8 @@ struct HealthCalculatorService {
             suggested: Int(weightInKg * suggestedGramsPerKg)
         )
     }
+
+    static func calculateTotalCalories(carbs: Double, protein: Double, fat: Double) -> Int {
+        return Int((carbs * 4) + (protein * 4) + (fat * 9))
+    }
 }
