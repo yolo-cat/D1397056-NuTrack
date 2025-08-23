@@ -306,6 +306,11 @@ struct NutrientInputField: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(color.opacity(0.3), lineWidth: 1)
                 )
+                .onChange(of: value) { _, newValue in
+                    // 僅允許數字字元，移除非數字輸入（含貼上內容）
+                    let filtered = newValue.filter { $0.isNumber }
+                    if filtered != newValue { value = filtered }
+                }
         }
     }
 }

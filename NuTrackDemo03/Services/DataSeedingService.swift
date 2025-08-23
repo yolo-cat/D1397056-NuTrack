@@ -16,6 +16,20 @@ final class DataSeedingService {
     /// - Note: 此方法會先檢查資料庫中是否已有使用者資料，若有則會直接跳過，防止重複填充。
     @MainActor
     static func seedDatabase(modelContext: ModelContext) {
+        // 0. 先清理舊的虛擬用戶資料（若存在）
+        let bannedNames: Set<String> = ["測試使用者", "陳大文", "開發者", "林小美", "新用戶"]
+        do {
+            let allUsers = try modelContext.fetch(FetchDescriptor<UserProfile>())
+            let toDelete = allUsers.filter { bannedNames.contains($0.name) }
+            if !toDelete.isEmpty {
+                toDelete.forEach { modelContext.delete($0) }
+                try modelContext.save() // 先儲存刪除
+                print("已清除虛擬用戶：\(toDelete.map { $0.name }.joined(separator: ", "))")
+            }
+        } catch {
+            print("清理虛擬用戶時發生錯誤: \(error)")
+        }
+        
         // 1. 檢查資料庫是否已經填充過
         do {
             let descriptor = FetchDescriptor<UserProfile>()

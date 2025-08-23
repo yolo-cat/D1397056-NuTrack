@@ -13,14 +13,14 @@ struct HeaderView: View {
     
     var body: some View {
         HStack {
-            Button(action: { /* 通知功能待實現 */ }) {
-                Image(systemName: "bell.fill")
-                    .font(.title2)
-                    .foregroundColor(.primaryBlue)
-            }
-            .accessibilityLabel("通知")
+//            Button(action: { /* 通知功能待實現 */ }) {
+//                Image(systemName: "bell.fill")
+//                    .font(.title2)
+//                    .foregroundColor(.primaryBlue)
+//            }
+//            .accessibilityLabel("通知")
             
-            Spacer()
+//            Spacer()
             
             Text("NuTrack")
                 .font(.title2)

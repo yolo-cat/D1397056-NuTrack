@@ -1,4 +1,9 @@
-// /Models/UserProfile.swift
+//
+//  UserProfile.swift
+//  NuTrackDemo03
+//
+//  Created by 訪客使用者 on 2025/8/1.
+//
 
 import Foundation
 import SwiftData
@@ -8,24 +13,26 @@ final class UserProfile {
     @Attribute(.unique) var id: UUID
     var name: String
     
-    // 新增：儲存使用者的體重，可選(nil)代表尚未填寫
-    var weightInKg: Double? 
+    // 可選體重（尚未填寫時為 nil）
+    var weightInKg: Double?
     
-    // 目標值：這些值最終將由使用者根據建議自行設定
+    // 目標值（預設）
     var dailyCalorieGoal: Int
     var dailyCarbsGoal: Int
     var dailyProteinGoal: Int
     var dailyFatGoal: Int
 
-    // init 中的預設值，作為使用者完成個人化設定前的「初始值」
+    // 與 MealEntry 的反向關聯，刪除使用者時一併刪除其餐點
+    @Relationship(deleteRule: .cascade, inverse: \MealEntry.user)
+    var mealEntries: [MealEntry] = []
+
     init(id: UUID = UUID(),
          name: String,
-         weightInKg: Double? = nil, // 體重可以在建立後再補上
+         weightInKg: Double? = nil,
          dailyCalorieGoal: Int = 2000,
          dailyCarbsGoal: Int = 250,
          dailyProteinGoal: Int = 125,
          dailyFatGoal: Int = 56) {
-        
         self.id = id
         self.name = name
         self.weightInKg = weightInKg

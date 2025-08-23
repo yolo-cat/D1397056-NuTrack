@@ -12,21 +12,21 @@ struct NewNutritionTrackerView: View {
     let user: UserProfile
     
     @Environment(\.modelContext) private var modelContext
-    @Query private var mealEntries: [MealEntry]
     
     @State private var showAddNutrition = false
     
-    init(user: UserProfile) {
-        self.user = user
-        // 動態設定查詢謂詞，只抓取當前使用者今天的餐點紀錄
+    private var mealEntries: [MealEntry] {
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: .now)
         let endOfToday = calendar.date(byAdding: .day, value: 1, to: startOfToday)!
         let userID = user.id
-        
-        self._mealEntries = Query(filter: #Predicate<MealEntry> {
-            $0.user?.id == userID && $0.timestamp >= startOfToday && $0.timestamp < endOfToday
-        }, sort: \.timestamp, order: .reverse)
+        let descriptor = FetchDescriptor<MealEntry>(
+            predicate: #Predicate<MealEntry> {
+                $0.user?.id == userID && $0.timestamp >= startOfToday && $0.timestamp < endOfToday
+            },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
     }
     
     // MARK: - Computed Properties
