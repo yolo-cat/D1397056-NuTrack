@@ -22,16 +22,22 @@ struct UserProfileView: View {
         Double(weightInput) ?? userManager.userWeight
     }
     
-    private var weightRanges: (carbsRange: ClosedRange<Double>, proteinRange: ClosedRange<Double>, fatRange: ClosedRange<Double>) {
-        WeightBasedNutrition.calculateNutrientRanges(for: currentWeight)
+    private var weightRanges: (carbs: ClosedRange<Double>, protein: ClosedRange<Double>, fat: ClosedRange<Double>) {
+        let proteinRec = HealthCalculatorService.getProteinRecommendation(weightInKg: currentWeight)
+        let fatRec = HealthCalculatorService.getFatRecommendation(weightInKg: currentWeight)
+        // 使用新的、僅依賴體重的方法
+        let carbsRec = HealthCalculatorService.getCarbsRecommendation(weightInKg: currentWeight)
+        
+        return (
+            carbs: Double(carbsRec.min)...Double(carbsRec.max),
+            protein: Double(proteinRec.min)...Double(proteinRec.max),
+            fat: Double(fatRec.min)...Double(fatRec.max)
+        )
     }
     
     private var totalCalories: Int {
-        WeightBasedNutrition.calculateTotalCalories(
-            carbs: Int(carbsSliderValue),
-            protein: Int(proteinSliderValue),
-            fat: Int(fatSliderValue)
-        )
+        // 直接計算，移除對舊服務的依賴
+        return (Int(carbsSliderValue) * 4) + (Int(proteinSliderValue) * 4) + (Int(fatSliderValue) * 9)
     }
     
     var body: some View {
@@ -192,56 +198,34 @@ struct UserProfileView: View {
     private var nutritionGoalsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("智能營養目標")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .font(.headline).fontWeight(.semibold).foregroundColor(.primary)
             
-            if currentWeight.isValidWeight {
+            if isValid(weight: currentWeight) {
                 VStack(spacing: 12) {
-                    let baseGoals = WeightBasedNutrition.calculateBaseNutritionGoals(for: currentWeight)
+                    // 使用新的 HealthCalculatorService
+                    let proteinRec = HealthCalculatorService.getProteinRecommendation(weightInKg: currentWeight)
+                    let fatRec = HealthCalculatorService.getFatRecommendation(weightInKg: currentWeight)
+                    let carbsRec = HealthCalculatorService.getCarbsRecommendation(weightInKg: currentWeight)
                     
                     HStack {
-                        Text("基於 \(currentWeight.formattedWeight) 公斤的建議目標：")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
+                        Text("基於 \(formatted(weight: currentWeight)) 公斤的建議目標：")
+                            .font(.subheadline).foregroundColor(.secondary)
                         Spacer()
                     }
                     
                     HStack(spacing: 20) {
-                        NutrientRecommendationCard(
-                            title: "碳水",
-                            value: baseGoals.carbs,
-                            unit: "g",
-                            color: .carbsColor
-                        )
-                        
-                        NutrientRecommendationCard(
-                            title: "蛋白質",
-                            value: baseGoals.protein,
-                            unit: "g",
-                            color: .proteinColor
-                        )
-                        
-                        NutrientRecommendationCard(
-                            title: "脂肪",
-                            value: baseGoals.fat,
-                            unit: "g",
-                            color: .fatColor
-                        )
+                        NutrientRecommendationCard(title: "碳水", value: carbsRec.suggested, unit: "g", color: .carbsColor)
+                        NutrientRecommendationCard(title: "蛋白質", value: proteinRec.suggested, unit: "g", color: .proteinColor)
+                        NutrientRecommendationCard(title: "脂肪", value: fatRec.suggested, unit: "g", color: .fatColor)
                     }
                 }
             } else {
                 Text("請輸入有效體重以獲得個人化建議")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.vertical, 12)
+                    .font(.subheadline).foregroundColor(.secondary).padding(.vertical, 12)
             }
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 20)
-        .background(.white)
-        .cornerRadius(12)
+        .padding(.vertical, 16).padding(.horizontal, 20)
+        .background(.white).cornerRadius(12)
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
     
@@ -256,7 +240,7 @@ struct UserProfileView: View {
             NutrientSlider(
                 title: "碳水化合物",
                 value: $carbsSliderValue,
-                range: weightRanges.carbsRange,
+                range: weightRanges.carbs,
                 color: .carbsColor,
                 unit: "g"
             )
@@ -265,7 +249,7 @@ struct UserProfileView: View {
             NutrientSlider(
                 title: "蛋白質",
                 value: $proteinSliderValue,
-                range: weightRanges.proteinRange,
+                range: weightRanges.protein,
                 color: .proteinColor,
                 unit: "g"
             )
@@ -274,7 +258,7 @@ struct UserProfileView: View {
             NutrientSlider(
                 title: "脂肪",
                 value: $fatSliderValue,
-                range: weightRanges.fatRange,
+                range: weightRanges.fat,
                 color: .fatColor,
                 unit: "g"
             )
@@ -361,44 +345,44 @@ struct UserProfileView: View {
     // MARK: - Helper Functions
     
     private func loadCurrentValues() {
-        weightInput = userManager.userWeight.formattedWeight
+        weightInput = formatted(weight: userManager.userWeight)
         carbsSliderValue = userManager.carbsGoal
         proteinSliderValue = userManager.proteinGoal
         fatSliderValue = userManager.fatGoal
     }
     
     private func updateNutritionSlidersBasedOnWeight() {
-        guard let weight = Double(weightInput), weight.isValidWeight else {
-            return
-        }
+        guard let weight = Double(weightInput), isValid(weight: weight) else { return }
         
-        let ranges = WeightBasedNutrition.calculateNutrientRanges(for: weight)
+        let ranges = self.weightRanges
         
-        // 確保當前滑桿值在新的範圍內
         withAnimation(.easeInOut(duration: 0.3)) {
-            carbsSliderValue = max(ranges.carbsRange.lowerBound, min(ranges.carbsRange.upperBound, carbsSliderValue))
-            proteinSliderValue = max(ranges.proteinRange.lowerBound, min(ranges.proteinRange.upperBound, proteinSliderValue))
-            fatSliderValue = max(ranges.fatRange.lowerBound, min(ranges.fatRange.upperBound, fatSliderValue))
+            carbsSliderValue = max(ranges.carbs.lowerBound, min(ranges.carbs.upperBound, carbsSliderValue))
+            proteinSliderValue = max(ranges.protein.lowerBound, min(ranges.protein.upperBound, proteinSliderValue))
+            fatSliderValue = max(ranges.fat.lowerBound, min(ranges.fat.upperBound, fatSliderValue))
         }
     }
     
     private func updateNutritionGoalsFromWeight() {
-        guard let weight = Double(weightInput), weight.isValidWeight else {
+        guard let weight = Double(weightInput), isValid(weight: weight) else {
             showWeightValidationError = true
             return
         }
         
-        let goals = WeightBasedNutrition.calculateBaseNutritionGoals(for: weight)
+        // 使用新的 HealthCalculatorService
+        let proteinRec = HealthCalculatorService.getProteinRecommendation(weightInKg: weight)
+        let fatRec = HealthCalculatorService.getFatRecommendation(weightInKg: weight)
+        let carbsRec = HealthCalculatorService.getCarbsRecommendation(weightInKg: weight)
         
         withAnimation(.easeInOut(duration: 0.5)) {
-            carbsSliderValue = Double(goals.carbs)
-            proteinSliderValue = Double(goals.protein)
-            fatSliderValue = Double(goals.fat)
+            carbsSliderValue = Double(carbsRec.suggested)
+            proteinSliderValue = Double(proteinRec.suggested)
+            fatSliderValue = Double(fatRec.suggested)
         }
     }
     
     private func saveSettings() {
-        guard let weight = Double(weightInput), weight.isValidWeight else {
+        guard let weight = Double(weightInput), isValid(weight: weight) else {
             showWeightValidationError = true
             return
         }
@@ -415,6 +399,15 @@ struct UserProfileView: View {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             presentationMode.wrappedValue.dismiss()
         }
+    }
+    
+    // 將舊 Extension 的邏輯整合為 View 的私有方法
+    private func isValid(weight: Double) -> Bool {
+        return weight >= 30.0 && weight <= 300.0
+    }
+    
+    private func formatted(weight: Double) -> String {
+        return String(format: "%.1f", weight)
     }
 }
 

@@ -132,11 +132,11 @@ class SimpleUserManager: ObservableObject {
     }
     
     // MARK: - 體重和營養目標管理
-    
+
     /// 更新用戶體重
     /// - Parameter weight: 新的體重（公斤）
     func updateWeight(_ weight: Double) {
-        guard weight.isValidWeight else { return }
+        guard isValid(weight: weight) else { return }
         
         DispatchQueue.main.async {
             self.userWeight = weight
@@ -146,12 +146,15 @@ class SimpleUserManager: ObservableObject {
     
     /// 根據體重更新營養目標
     func updateNutritionGoalsBasedOnWeight() {
-        let nutrition = WeightBasedNutrition.calculateBaseNutritionGoals(for: userWeight)
-        
+        // 使用新的 HealthCalculatorService
+        let proteinRec = HealthCalculatorService.getProteinRecommendation(weightInKg: userWeight)
+        let fatRec = HealthCalculatorService.getFatRecommendation(weightInKg: userWeight)
+        let carbsRec = HealthCalculatorService.getCarbsRecommendation(weightInKg: userWeight)
+
         DispatchQueue.main.async {
-            self.carbsGoal = Double(nutrition.carbs)
-            self.proteinGoal = Double(nutrition.protein)
-            self.fatGoal = Double(nutrition.fat)
+            self.carbsGoal = Double(carbsRec.suggested)
+            self.proteinGoal = Double(proteinRec.suggested)
+            self.fatGoal = Double(fatRec.suggested)
             
             self.saveNutritionGoals()
         }
@@ -182,20 +185,26 @@ class SimpleUserManager: ObservableObject {
     /// 獲取當前營養目標
     /// - Returns: 當前的每日營養目標
     func getCurrentNutritionGoals() -> DailyGoal {
-        return DailyGoal.custom(
+        // 將 DailyGoal.custom 的邏輯內聯，移除對舊服務的依賴
+        let totalCalories = (Int(carbsGoal) * 4) + (Int(proteinGoal) * 4) + (Int(fatGoal) * 9)
+        
+        return DailyGoal(
+            calories: totalCalories,
             carbs: Int(carbsGoal),
             protein: Int(proteinGoal),
             fat: Int(fatGoal)
         )
     }
+
+    // MARK: - Private Helpers
+
+    private func isValid(weight: Double) -> Bool {
+        return weight >= 30.0 && weight <= 300.0
+    }
     
     /// 計算總熱量目標
     var totalCaloriesGoal: Int {
-        return WeightBasedNutrition.calculateTotalCalories(
-            carbs: Int(carbsGoal),
-            protein: Int(proteinGoal),
-            fat: Int(fatGoal)
-        )
+        return (Int(carbsGoal) * 4) + (Int(proteinGoal) * 4) + (Int(fatGoal) * 9)
     }
 }
 
