@@ -1,42 +1,4 @@
 import SwiftUI
-import Foundation
-
-// MARK: - 時段分類枚舉
-enum TimeBasedCategory: String, CaseIterable {
-    case lateNight = "深夜"      // 00:00 - 05:59
-    case breakfast = "早餐"      // 06:00 - 10:59
-    case lunch = "午餐"          // 11:00 - 15:59
-    case dinner = "晚餐"         // 16:00 - 21:59
-    case midnightSnack = "宵夜"  // 22:00 - 23:59
-    
-    var icon: String {
-        switch self {
-        case .lateNight: return "moon.zzz.fill"
-        case .breakfast: return "sunrise.fill"
-        case .lunch: return "sun.max.fill"
-        case .dinner: return "sunset.fill"
-        case .midnightSnack: return "moon.fill"
-        }
-    }
-    
-    /// 統一的時間分類方法
-    static func categorize(from date: Date) -> TimeBasedCategory {
-        let hour = Calendar.current.component(.hour, from: date)
-        
-        switch hour {
-        case 0..<6:
-            return .lateNight
-        case 6..<11:
-            return .breakfast
-        case 11..<16:
-            return .lunch
-        case 16..<22:
-            return .dinner
-        default:
-            return .midnightSnack
-        }
-    }
-}
 
 //
 //  TodayFoodLogView.swift
@@ -44,8 +6,6 @@ enum TimeBasedCategory: String, CaseIterable {
 //
 //  Created by NuTrack on 2024/7/31.
 //
-
-import SwiftUI
 
 struct TodayFoodLogView: View {
     let foodEntries: [MealEntry]
@@ -104,21 +64,12 @@ struct FoodEntryRowView: View {
             // Time circle with meal type icon or nutrition icon
             ZStack {
                 Circle()
-                    .fill(entryColor.opacity(0.15))
+                    .fill(Color.accentColor.opacity(0.15))
                     .frame(width: 50, height: 50)
                 
-                VStack(spacing: 2) {
-                    Image(systemName: entryIcon)
-                        .font(.caption)
-                        .foregroundColor(entryColor)
-                    
-                    // 新增時段標籤
-                    Text(timeBasedCategory.rawValue)
-                        .font(.caption2)
-                        .fontWeight(.light)
-                        .foregroundColor(entryColor.opacity(0.8))
-                        .lineLimit(1)
-                }
+                Image(systemName: icon(for: entry.timestamp))
+                    .font(.caption)
+                    .foregroundColor(.accentColor)
             }
             
             // Food description
@@ -145,7 +96,7 @@ struct FoodEntryRowView: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(entryColor)
+                .background(Color.accentColor)
                 .cornerRadius(12)
         }
         .padding(.vertical, 12)
@@ -155,28 +106,21 @@ struct FoodEntryRowView: View {
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
     
-    private var timeBasedCategory: TimeBasedCategory {
-        return TimeBasedCategory.categorize(from: entry.timestamp)
-    }
-    
     private var timeText: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: entry.timestamp)
     }
     
-    private var entryColor: Color {
-        switch timeBasedCategory {
-        case .lateNight: return .purple
-        case .breakfast: return .orange
-        case .lunch: return .blue
-        case .dinner: return .red
-        case .midnightSnack: return .indigo
+    private func icon(for date: Date) -> String {
+        let hour = Calendar.current.component(.hour, from: date)
+        switch hour {
+        case 0..<6:  return "moon.zzz.fill"
+        case 6..<11: return "sunrise.fill"
+        case 11..<16: return "sun.max.fill"
+        case 16..<22: return "sunset.fill"
+        default:     return "moon.fill"
         }
-    }
-    
-    private var entryIcon: String {
-        return timeBasedCategory.icon
     }
 }
 
