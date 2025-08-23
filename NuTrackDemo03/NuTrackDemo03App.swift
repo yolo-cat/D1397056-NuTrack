@@ -17,12 +17,14 @@ struct NuTrackDemo03App: App {
     init() {
         do {
             modelContainer = try ModelContainer(for: UserProfile.self, MealEntry.self)
-            let modelContainer = self.modelContainer
-            Task { @MainActor in
-                DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
-            }
         } catch {
-            fatalError("無法建立 ModelContainer: \(error)")
+            print("無法建立 ModelContainer: \(error)")
+            // 創建一個基本的容器作為備用
+            do {
+                modelContainer = try ModelContainer(for: UserProfile.self, MealEntry.self)
+            } catch {
+                fatalError("無法建立備用 ModelContainer: \(error)")
+            }
         }
     }
     
@@ -46,6 +48,12 @@ struct NuTrackDemo03App: App {
                 }
             }
             .animation(.easeInOut(duration: 0.4), value: currentUser?.id)
+            .onAppear {
+                // 在 UI 出現後執行數據種子填充，避免阻塞 App 啟動
+                Task { @MainActor in
+                    DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
+                }
+            }
         }
         .modelContainer(modelContainer)
     }

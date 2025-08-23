@@ -39,7 +39,8 @@ final class DataSeedingService {
                 return
             }
         } catch {
-            fatalError("檢查現有使用者時發生錯誤: \(error.localizedDescription)")
+            print("檢查現有使用者時發生錯誤: \(error.localizedDescription)")
+            return
         }
         
         print("資料庫為空，開始填充種子資料...")
@@ -67,18 +68,24 @@ final class DataSeedingService {
                 continue
             }
             
-            let mealEntry = MealEntry(
-                id: mockMeal.id,
-                timestamp: Date(timeIntervalSince1970: TimeInterval(mockMeal.timestamp) / 1000),
-                carbs: mockMeal.nutrition.carbs,
-                protein: mockMeal.nutrition.protein,
-                fat: mockMeal.nutrition.fat
-            )
-            
-            // 建立 UserProfile 和 MealEntry 之間的雙向關聯
-            mealEntry.user = userProfile
-            // SwiftData 會自動處理反向關聯，但如果模型中有定義，也可以手動添加
-            // userProfile.mealEntries.append(mealEntry)
+            do {
+                let mealEntry = MealEntry(
+                    id: mockMeal.id,
+                    timestamp: Date(timeIntervalSince1970: TimeInterval(mockMeal.timestamp) / 1000),
+                    carbs: mockMeal.nutrition.carbs,
+                    protein: mockMeal.nutrition.protein,
+                    fat: mockMeal.nutrition.fat
+                )
+                
+                // 建立 UserProfile 和 MealEntry 之間的雙向關聯
+                mealEntry.user = userProfile
+                modelContext.insert(mealEntry)
+                // SwiftData 會自動處理反向關聯，但如果模型中有定義，也可以手動添加
+                // userProfile.mealEntries.append(mealEntry)
+            } catch {
+                print("警告：創建餐點紀錄時發生錯誤: \(error.localizedDescription)")
+                continue
+            }
         }
         
         // 5. 儲存變更
@@ -86,7 +93,8 @@ final class DataSeedingService {
             try modelContext.save()
             print("種子資料填充成功！")
         } catch {
-            fatalError("儲存種子資料時發生錯誤: \(error.localizedDescription)")
+            print("儲存種子資料時發生錯誤: \(error.localizedDescription)")
+            return
         }
     }
     
@@ -95,7 +103,8 @@ final class DataSeedingService {
     /// - Returns: 解碼後的物件，若失敗則返回 nil。
     private static func load<T: Decodable>(_ filename: String) -> T? {
         guard let file = Bundle.main.url(forResource: filename, withExtension: nil) else {
-            fatalError("在主 Bundle 中找不到檔案: \(filename)")
+            print("在主 Bundle 中找不到檔案: \(filename)")
+            return nil
         }
         
         do {
@@ -103,7 +112,8 @@ final class DataSeedingService {
             let decoder = JSONDecoder()
             return try decoder.decode(T.self, from: data)
         } catch {
-            fatalError("無法載入或解碼檔案 \(filename): \(error.localizedDescription)")
+            print("無法載入或解碼檔案 \(filename): \(error.localizedDescription)")
+            return nil
         }
     }
 }
@@ -114,6 +124,26 @@ private struct MockUser: Decodable {
     let id: UUID
     let name: String
     let weightInKg: Double?
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // 嘗試解析 UUID，如果失敗則使用新的 UUID
+        if let idString = try? container.decode(String.self, forKey: .id),
+           let uuid = UUID(uuidString: idString) {
+            self.id = uuid
+        } else {
+            print("警告：無法解析用戶 ID，使用新的 UUID")
+            self.id = UUID()
+        }
+        
+        self.name = try container.decode(String.self, forKey: .name)
+        self.weightInKg = try container.decodeIfPresent(Double.self, forKey: .weightInKg)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id, name, weightInKg
+    }
 }
 
 private struct MockMealData: Decodable {
@@ -125,6 +155,34 @@ private struct MockMeal: Decodable {
     let userId: UUID
     let timestamp: Int64
     let nutrition: MockNutrition
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // 嘗試解析 UUID，如果失敗則使用新的 UUID
+        if let idString = try? container.decode(String.self, forKey: .id),
+           let uuid = UUID(uuidString: idString) {
+            self.id = uuid
+        } else {
+            print("警告：無法解析餐點 ID，使用新的 UUID")
+            self.id = UUID()
+        }
+        
+        if let userIdString = try? container.decode(String.self, forKey: .userId),
+           let uuid = UUID(uuidString: userIdString) {
+            self.userId = uuid
+        } else {
+            print("警告：無法解析用戶 ID，跳過此餐點")
+            throw DecodingError.dataCorruptedError(forKey: .userId, in: container, debugDescription: "無效的用戶 ID")
+        }
+        
+        self.timestamp = try container.decode(Int64.self, forKey: .timestamp)
+        self.nutrition = try container.decode(MockNutrition.self, forKey: .nutrition)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id, userId, timestamp, nutrition
+    }
 }
 
 private struct MockNutrition: Decodable {
