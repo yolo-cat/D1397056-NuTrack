@@ -139,8 +139,8 @@ struct UserProfileView: View {
         } message: {
             Text("此操作將永久刪除您的所有資料，包含餐點紀錄，且無法復原。")
         }
-        .onChange(of: isWeightFieldFocused) { isFocused in
-            if !isFocused {
+        .onChange(of: isWeightFieldFocused) { _, newValue in
+            if !newValue {
                 // 1. Update the weight used for calculating recommendations
                 let newWeight = Double(weightInput) ?? 0
                 weightForRecommendation = newWeight
