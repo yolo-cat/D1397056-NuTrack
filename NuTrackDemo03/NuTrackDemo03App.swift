@@ -56,15 +56,35 @@ struct MainAppView: View {
     let user: UserProfile
     let onLogout: () -> Void
     
+    @State private var showProfileSetup = false
+    
     var body: some View {
-        // NewNutritionTrackerView 也需要被重構以接收 UserProfile
-        NewNutritionTrackerView(user: user)
-            .onShake {
-                // 開發用：搖動裝置可以登出
-                #if DEBUG
-                onLogout()
-                #endif
+        Group {
+            if isFirstTimeUser {
+                UserProfileSetupView(user: user) {
+                    // 完成設置後，隱藏設置界面
+                    showProfileSetup = false
+                }
+            } else {
+                // NewNutritionTrackerView 也需要被重構以接收 UserProfile
+                NewNutritionTrackerView(user: user)
             }
+        }
+        .onShake {
+            // 開發用：搖動裝置可以登出
+            #if DEBUG
+            onLogout()
+            #endif
+        }
+        .onAppear {
+            // 檢查是否為首次使用者
+            showProfileSetup = isFirstTimeUser
+        }
+    }
+    
+    /// 判斷是否為首次使用者（基於是否設置了體重）
+    private var isFirstTimeUser: Bool {
+        return user.weightInKg == nil
     }
 }
 
