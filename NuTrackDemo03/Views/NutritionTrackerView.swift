@@ -49,12 +49,12 @@ struct NewNutritionTrackerView: View {
     // MARK: - Main Body
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack(alignment: .bottom) {
                 mainNutritionView
                 addMealButton
             }
-            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $showAddNutrition) {
             AddNutritionView { nutritionInfo in
@@ -73,7 +73,7 @@ struct NewNutritionTrackerView: View {
                 ScrollView {
                     VStack(spacing: 24) {
                         NutritionProgressSection(nutritionData: nutritionData)
-                        TodayFoodLogView(foodEntries: foodLogEntries, onDelete: deleteMeal)
+                        TodayFoodLogView(foodEntries: foodLogEntries)
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 80) // Add padding for floating button
@@ -118,8 +118,426 @@ struct NewNutritionTrackerView: View {
     }
 }
 
+// MARK: - Components • Header (Top of screen)
+struct HeaderView: View {
+    let user: UserProfile
+    let onLogout: () -> Void
+    
+    var body: some View {
+        HStack {
+            Text("NuTrack")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.primaryBlue)
+            
+            Spacer()
+            
+            NavigationLink(destination: UserProfileView(user: user, onLogout: onLogout)) {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Color.primaryBlue)
+                        .frame(width: 32, height: 32)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                        )
+                    
+                    Text(user.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primaryBlue)
+                        .lineLimit(1)
+                }
+            }
+            .accessibilityLabel("用戶資料: \(user.name)")
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(.ultraThinMaterial)
+        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+}
 
+// MARK: - Components • Nutrition Progress (Section + Bar)
+struct NutritionProgressSection: View {
+    let nutritionData: NutritionData
+    @State private var animationDelays: [Double] = [0, 0.2, 0.4]
+    @State private var showProgress = false
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("今日營養進度")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                Spacer()
+            }
+            
+            VStack(spacing: 16) {
+                NutritionProgressBar(
+                    title: "碳水化合物",
+                    nutrientData: nutritionData.carbs,
+                    calorieInfo: nutritionData.macronutrientCaloriesDistribution.carbs,
+                    color: .carbsColor,
+                    showProgress: showProgress
+                )
+                .opacity(showProgress ? 1 : 0)
+                .animation(.easeInOut(duration: 0.8).delay(animationDelays[0]), value: showProgress)
+                
+                NutritionProgressBar(
+                    title: "蛋白質",
+                    nutrientData: nutritionData.protein,
+                    calorieInfo: nutritionData.macronutrientCaloriesDistribution.protein,
+                    color: .proteinColor,
+                    showProgress: showProgress
+                )
+                .opacity(showProgress ? 1 : 0)
+                .animation(.easeInOut(duration: 0.8).delay(animationDelays[1]), value: showProgress)
+                
+                NutritionProgressBar(
+                    title: "脂肪",
+                    nutrientData: nutritionData.fat,
+                    calorieInfo: nutritionData.macronutrientCaloriesDistribution.fat,
+                    color: .fatColor,
+                    showProgress: showProgress
+                )
+                .opacity(showProgress ? 1 : 0)
+                .animation(.easeInOut(duration: 0.8).delay(animationDelays[2]), value: showProgress)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 20)
+        .background(Color.backgroundGray.opacity(0.5))
+        .cornerRadius(16)
+        .onAppear { showProgress = true }
+    }
+}
 
+struct NutritionProgressBar: View {
+    let title: String
+    let nutrientData: NutritionData.Nutrient
+    let calorieInfo: Int
+    let color: Color
+    let showProgress: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(nutrientData.percentage)%")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(color)
+                }
+            }
+            
+            HStack {
+                Text("\(nutrientData.current)\(nutrientData.unit)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("•")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("\(calorieInfo) 卡")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text("目標 \(nutrientData.goal)\(nutrientData.unit)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 12)
+                    
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [color.opacity(0.7), color]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(
+                            width: showProgress ? geometry.size.width * min(nutrientData.progress, 1.0) : 0,
+                            height: 12
+                        )
+                        .animation(.easeInOut(duration: 1.0), value: showProgress)
+                    
+                    if showProgress && nutrientData.progress > 0 {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 6, height: 6)
+                            .position(
+                                x: min(geometry.size.width * nutrientData.progress, geometry.size.width - 3),
+                                y: 6
+                            )
+                            .animation(.easeInOut(duration: 1.0).delay(0.5), value: showProgress)
+                    }
+                }
+            }
+            .frame(height: 12)
+        }
+        .padding(.vertical, 6)
+    }
+}
+
+// MARK: - Components • Today Food Log (List + Row)
+struct TodayFoodLogView: View {
+    let foodEntries: [MealEntry]
+    @State private var animatedItems: Set<UUID> = []
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("今日記錄")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                Spacer()
+                
+                Text(todayDateString)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            LazyVStack(spacing: 12) {
+                ForEach(Array(foodEntries.enumerated()), id: \.element.id) { index, entry in
+                    FoodEntryRowView(entry: entry)
+                        .scaleEffect(animatedItems.contains(entry.id) ? 1.0 : 0.8)
+                        .opacity(animatedItems.contains(entry.id) ? 1.0 : 0)
+                        .animation(
+                            .spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)
+                            .delay(Double(index) * 0.1),
+                            value: animatedItems.contains(entry.id)
+                        )
+                        .onAppear {
+                            animatedItems.insert(entry.id)
+                        }
+                }
+            }
+        }
+        .onAppear {
+            for entry in foodEntries {
+                animatedItems.insert(entry.id)
+            }
+        }
+    }
+    
+    private var todayDateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy年MM月dd日"
+        formatter.locale = Locale(identifier: "zh_TW")
+        return formatter.string(from: Date())
+    }
+}
+
+struct FoodEntryRowView: View {
+    let entry: MealEntry
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.15))
+                    .frame(width: 50, height: 50)
+                
+                Image(systemName: icon(for: entry.timestamp))
+                    .font(.caption)
+                    .foregroundColor(.accentColor)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text((entry.name ?? "").isEmpty ? timeText : (entry.name ?? ""))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .lineLimit(2)
+                    .foregroundColor(.primary)
+                
+                HStack {
+                    Text("\(timeText) • \(entry.calories) 卡路里")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Spacer()
+            
+            Text("\(entry.carbs)g")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.accentColor)
+                .cornerRadius(12)
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+    
+    private var timeText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: entry.timestamp)
+    }
+    
+    private func icon(for date: Date) -> String {
+        let hour = Calendar.current.component(.hour, from: date)
+        switch hour {
+        case 0..<6:  return "moon.zzz.fill"
+        case 6..<11: return "sunrise.fill"
+        case 11..<16: return "sun.max.fill"
+        case 16..<22: return "sunset.fill"
+        default:     return "moon.fill"
+        }
+    }
+}
+
+// MARK: - Components • Custom Tab (TabView + TabItem + Alternative Bar)
+struct CustomTabView: View {
+    @Binding var selectedTab: Int
+    let onAddMeal: () -> Void
+    
+    var body: some View {
+        ZStack {
+            // Main tab view
+            TabView(selection: $selectedTab) {
+                // Home Tab
+                Group { EmptyView() }
+                    .tabItem { Image(systemName: "house.fill"); Text("Home") }
+                    .tag(0)
+                
+                // Diary Tab
+                Group { EmptyView() }
+                    .tabItem { Image(systemName: "book.fill"); Text("Diary") }
+                    .tag(1)
+                
+                // Spacer for center button
+                Group { EmptyView() }
+                    .tabItem { Image(systemName: ""); Text("") }
+                    .tag(2)
+                
+                // Trends Tab
+                Group { EmptyView() }
+                    .tabItem { Image(systemName: "chart.line.uptrend.xyaxis"); Text("Trends") }
+                    .tag(3)
+                
+                // Settings Tab
+                Group { EmptyView() }
+                    .tabItem { Image(systemName: "gearshape.fill"); Text("Settings") }
+                    .tag(4)
+            }
+            .accentColor(Color.primaryBlue)
+            
+            // Floating Add Button
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            onAddMeal()
+                        }
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.primaryBlue)
+                                .frame(width: 60, height: 60)
+                                .shadow(color: Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                            Image(systemName: "plus")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
+                    Spacer()
+                }
+                .padding(.bottom, 30)
+            }
+        }
+    }
+}
+
+struct TabItem {
+    let icon: String
+    let title: String
+    let tag: Int
+}
+
+extension TabItem {
+    static let allTabs: [TabItem] = [
+        TabItem(icon: "house.fill", title: "Home", tag: 0),
+        TabItem(icon: "book.fill", title: "Diary", tag: 1),
+        TabItem(icon: "plus.circle.fill", title: "Add", tag: 2),
+        TabItem(icon: "chart.line.uptrend.xyaxis", title: "Trends", tag: 3),
+        TabItem(icon: "gearshape.fill", title: "Settings", tag: 4)
+    ]
+}
+
+struct AlternativeCustomTabBar: View {
+    @Binding var selectedTab: Int
+    let onAddMeal: () -> Void
+    
+    var body: some View {
+        HStack {
+            ForEach(TabItem.allTabs, id: \.tag) { tab in
+                if tab.tag == 2 {
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            onAddMeal()
+                        }
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.primaryBlue)
+                                .frame(width: 56, height: 56)
+                                .shadow(color: Color.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
+                            Image(systemName: "plus")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .offset(y: -8)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
+                } else {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedTab = tab.tag
+                        }
+                    }) {
+                        VStack(spacing: 4) {
+                            Image(systemName: tab.icon)
+                                .font(.title3)
+                                .foregroundColor(selectedTab == tab.tag ? Color.primaryBlue : .gray)
+                            Text(tab.title)
+                                .font(.caption2)
+                                .foregroundColor(selectedTab == tab.tag ? Color.primaryBlue : .gray)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+    }
+}
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
