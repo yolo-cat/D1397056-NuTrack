@@ -11,6 +11,12 @@ import SwiftData
 struct UserProfileView: View {
     @Bindable var user: UserProfile
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.modelContext) private var modelContext
+    
+    // 是否為首次登入導流到設定頁
+    private let isFirstLogin: Bool
+    // 首次登入完成時回呼（由 App 入口決定是否提供）
+    private let onCompleteSetup: (() -> Void)?
     
     // --- Local State for UI controls ---
     @State private var weightInput: String
@@ -23,8 +29,10 @@ struct UserProfileView: View {
     @State private var showWeightValidationError = false
 
     // --- Initializer ---
-    init(user: UserProfile) {
+    init(user: UserProfile, isFirstLogin: Bool? = nil, onCompleteSetup: (() -> Void)? = nil) {
         self.user = user
+        self.isFirstLogin = isFirstLogin ?? (user.weightInKg == nil)
+        self.onCompleteSetup = onCompleteSetup
         // Initialize state from the user model
         self._weightInput = State(initialValue: String(format: "%.1f", user.weightInKg ?? 70.0))
         self._carbsSliderValue = State(initialValue: Double(user.dailyCarbsGoal))
@@ -43,6 +51,11 @@ struct UserProfileView: View {
     
     private var currentWeight: Double {
         Double(weightInput) ?? user.weightInKg ?? 70.0
+    }
+    
+    private var isValidWeight: Bool {
+        guard let w = Double(weightInput) else { return false }
+        return w >= 30.0 && w <= 300.0
     }
 
     // --- Main Body ---
@@ -63,6 +76,7 @@ struct UserProfileView: View {
                 VStack(spacing: 30) {
                     // 2. Componentized UI
                     headerView
+                    if isFirstLogin { welcomeSection }
                     userAvatarSection
                     weightInputSection
                     nutritionGoalsSection // Renamed from nutritionSlidersSection for clarity
@@ -93,6 +107,14 @@ struct UserProfileView: View {
         } message: {
             Text("請輸入有效的體重範圍 (30.0 - 300.0 公斤)。")
         }
+        .onAppear {
+            // 首次登入預先套用建議值
+            if isFirstLogin { updateGoalsForWeight(forceApply: true) }
+        }
+        .onChange(of: weightInput) { _, _ in
+            // 體重變更時：首次登入自動套用建議；非首次僅更新範圍，不覆蓋使用者設定
+            updateGoalsForWeight(forceApply: isFirstLogin)
+        }
     }
 
     // MARK: - UI Components
@@ -105,16 +127,34 @@ struct UserProfileView: View {
                     .foregroundColor(.primaryBlue)
             }
             Spacer()
-            Text("用戶設置")
+            Text(isFirstLogin ? "設置基本資料" : "用戶設置")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primaryBlue)
             Spacer()
-            Button("保存", action: saveSettings)
+            Button(isFirstLogin ? "完成" : "保存", action: saveSettings)
                 .font(.headline)
                 .fontWeight(.medium)
                 .foregroundColor(.primaryBlue)
         }
+    }
+    
+    private var welcomeSection: some View {
+        VStack(spacing: 8) {
+            Text("歡迎使用 NuTrack，\(user.name)！")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.primaryBlue)
+                .multilineTextAlignment(.center)
+            Text("請先設置您的基本資料與每日營養目標")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(16)
+        .background(Color.primaryBlue.opacity(0.08))
+        .cornerRadius(12)
     }
     
     private var userAvatarSection: some View {
@@ -155,7 +195,7 @@ struct UserProfileView: View {
                     .foregroundColor(.secondary)
             }
             
-            if showWeightValidationError {
+            if showWeightValidationError || (!isValidWeight && isFirstLogin) {
                 Text("請輸入有效的體重 (30.0 - 300.0)")
                     .font(.caption)
                     .foregroundColor(.red)
@@ -178,22 +218,31 @@ struct UserProfileView: View {
                 label: "碳水化合物",
                 value: $carbsSliderValue,
                 recommendation: NutritionCalculatorService.getCarbsRecommendation(weightInKg: currentWeight),
-                color: .carbsColor
+                color: .carbsColor,
+                disabled: !isValidWeight
             )
             
             NutritionSliderView(
                 label: "蛋白質",
                 value: $proteinSliderValue,
                 recommendation: NutritionCalculatorService.getProteinRecommendation(weightInKg: currentWeight),
-                color: .proteinColor
+                color: .proteinColor,
+                disabled: !isValidWeight
             )
             
             NutritionSliderView(
                 label: "脂肪",
                 value: $fatSliderValue,
                 recommendation: NutritionCalculatorService.getFatRecommendation(weightInKg: currentWeight),
-                color: .fatColor
+                color: .fatColor,
+                disabled: !isValidWeight
             )
+            
+            if !isValidWeight {
+                Text("請先輸入有效體重以取得建議與啟用滑桿")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(20)
         .background(Color.white.opacity(0.5))
@@ -240,11 +289,31 @@ struct UserProfileView: View {
         user.dailyFatGoal = Int(fatSliderValue)
         user.dailyCalorieGoal = totalCalories
         
-        presentationMode.wrappedValue.dismiss()
+        // 儲存至資料庫
+        try? modelContext.save()
+        
+        // 首次登入完成 -> 回呼；一般情況 -> 關閉
+        if let onCompleteSetup {
+            onCompleteSetup()
+        } else {
+            presentationMode.wrappedValue.dismiss()
+        }
     }
     
     private func isValid(weight: Double) -> Bool {
         weight >= 30.0 && weight <= 300.0
+    }
+    
+    private func updateGoalsForWeight(forceApply: Bool) {
+        guard isValidWeight, let w = Double(weightInput) else { return }
+        let p = NutritionCalculatorService.getProteinRecommendation(weightInKg: w).suggested
+        let f = NutritionCalculatorService.getFatRecommendation(weightInKg: w).suggested
+        let c = NutritionCalculatorService.getCarbsRecommendation(weightInKg: w).suggested
+        if forceApply || (carbsSliderValue == 0 && proteinSliderValue == 0 && fatSliderValue == 0) {
+            proteinSliderValue = Double(p)
+            fatSliderValue = Double(f)
+            carbsSliderValue = Double(c)
+        }
     }
 }
 
@@ -254,6 +323,7 @@ struct NutritionSliderView: View {
     @Binding var value: Double
     let recommendation: RecommendationRange
     let color: Color
+    var disabled: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -270,11 +340,12 @@ struct NutritionSliderView: View {
             
             Slider(value: $value, in: Double(recommendation.min)...Double(recommendation.max), step: 1)
                 .tint(color)
+                .disabled(disabled)
             
             HStack {
-                Text("建議: \(recommendation.min)g")
+                Text("建議: \(recommendation.suggested)g")
                 Spacer()
-                Text("\(recommendation.max)g")
+                Text("範圍: \(recommendation.min) - \(recommendation.max)g")
             }
             .font(.caption)
             .foregroundColor(.gray)

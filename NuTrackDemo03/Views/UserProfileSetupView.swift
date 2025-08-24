@@ -17,9 +17,9 @@ struct UserProfileSetupView: View {
     
     @State private var weightInput: String = ""
     @FocusState private var isWeightFieldFocused: Bool
-    @State private var carbsGoal: Double = 250
-    @State private var proteinGoal: Double = 125
-    @State private var fatGoal: Double = 56
+    @State private var carbsGoal: Double = 0
+    @State private var proteinGoal: Double = 0
+    @State private var fatGoal: Double = 0
     @State private var showValidationError = false
     @State private var errorMessage = ""
     
@@ -30,8 +30,27 @@ struct UserProfileSetupView: View {
         return true
     }
     
+    // 根據輸入體重動態取得建議範圍
+    private var weightValue: Double? { Double(weightInput) }
+    private var proteinRec: RecommendationRange? {
+        guard isValidWeight, let w = weightValue else { return nil }
+        return NutritionCalculatorService.getProteinRecommendation(weightInKg: w)
+    }
+    private var fatRec: RecommendationRange? {
+        guard isValidWeight, let w = weightValue else { return nil }
+        return NutritionCalculatorService.getFatRecommendation(weightInKg: w)
+    }
+    private var carbsRec: RecommendationRange? {
+        guard isValidWeight, let w = weightValue else { return nil }
+        return NutritionCalculatorService.getCarbsRecommendation(weightInKg: w)
+    }
+
     private var totalCalories: Int {
-        Int((carbsGoal * 4) + (proteinGoal * 4) + (fatGoal * 9))
+        NutritionCalculatorService.calculateTotalCalories(
+            carbs: carbsGoal,
+            protein: proteinGoal,
+            fat: fatGoal
+        )
     }
     
     var body: some View {
@@ -76,10 +95,10 @@ struct UserProfileSetupView: View {
             }
         }
         .navigationBarHidden(true)
-        .alert("輸入錯誤", isPresented: $showValidationError) {
-            Button("確定", role: .cancel) { }
-        } message: {
-            Text(errorMessage)
+        .alert("輸入錯誤", isPresented: $showValidationError) { Button("確定", role: .cancel) { } } message: { Text(errorMessage) }
+        // 體重變更時即時刷新建議與滑桿值（iOS 17 簽名）
+        .onChange(of: weightInput) { _, _ in
+            updateGoalsForWeight()
         }
     }
     
@@ -104,7 +123,7 @@ struct UserProfileSetupView: View {
                     .foregroundColor(.primaryBlue)
                     .multilineTextAlignment(.center)
                 
-                Text("請設置您的基本資料，以獲得個人化的營養建議")
+                Text("設置基本資料")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -115,7 +134,7 @@ struct UserProfileSetupView: View {
     
     private var weightInputSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("體重 (公斤)")
+            Text("體重")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
@@ -131,9 +150,6 @@ struct UserProfileSetupView: View {
                     .font(.body)
                     .foregroundColor(.secondary)
             }
-            Text("建議範圍：30.0 - 300.0 公斤")
-                .font(.caption)
-                .foregroundColor(.secondary)
         }
         .padding()
         .background(Color.white)
@@ -142,7 +158,8 @@ struct UserProfileSetupView: View {
     }
     
     private var nutritionGoalsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        let disabled = !isValidWeight
+        return VStack(alignment: .leading, spacing: 16) {
             Text("每日營養目標")
                 .font(.headline)
                 .fontWeight(.semibold)
@@ -152,27 +169,33 @@ struct UserProfileSetupView: View {
             macronutrientSlider(
                 title: "碳水化合物",
                 value: $carbsGoal,
-                range: 100...400,
+                range: carbsRec.map { Double($0.min)...Double($0.max) } ?? (0...0),
                 color: .carbsColor,
-                unit: "g"
+                unit: "g",
+                recommended: carbsRec,
+                disabled: disabled
             )
             
             // 蛋白質滑桿
             macronutrientSlider(
                 title: "蛋白質",
                 value: $proteinGoal,
-                range: 50...200,
+                range: proteinRec.map { Double($0.min)...Double($0.max) } ?? (0...0),
                 color: .proteinColor,
-                unit: "g"
+                unit: "g",
+                recommended: proteinRec,
+                disabled: disabled
             )
             
             // 脂肪滑桿
             macronutrientSlider(
                 title: "脂肪",
                 value: $fatGoal,
-                range: 20...120,
+                range: fatRec.map { Double($0.min)...Double($0.max) } ?? (0...0),
                 color: .fatColor,
-                unit: "g"
+                unit: "g",
+                recommended: fatRec,
+                disabled: disabled
             )
         }
         .padding()
@@ -186,25 +209,49 @@ struct UserProfileSetupView: View {
         value: Binding<Double>,
         range: ClosedRange<Double>,
         color: Color,
-        unit: String
+        unit: String,
+        recommended: RecommendationRange?,
+        disabled: Bool
     ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let safeRange: ClosedRange<Double> = range.lowerBound < range.upperBound ? range : (0...1)
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
-                
                 Spacer()
-                
-                Text("\(Int(value.wrappedValue)) \(unit)")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(color)
+                if disabled {
+                    Text("- \(unit)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(color)
+                } else {
+                    Text("\(Int(value.wrappedValue)) \(unit)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(color)
+                }
             }
             
-            Slider(value: value, in: range, step: 1)
+            Slider(value: value, in: safeRange, step: 1)
                 .tint(color)
+                .disabled(disabled)
+            
+            if let rec = recommended {
+                HStack(spacing: 12) {
+                    Text("建議：\(rec.suggested) \(unit)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("範圍：\(rec.min) - \(rec.max) \(unit)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                Text("請先輸入有效體重以取得建議")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
     }
     
@@ -272,6 +319,21 @@ struct UserProfileSetupView: View {
             errorMessage = "保存資料時發生錯誤：\(error.localizedDescription)"
             showValidationError = true
         }
+    }
+    
+    private func updateGoalsForWeight() {
+        guard isValidWeight, let w = Double(weightInput) else {
+            carbsGoal = 0
+            proteinGoal = 0
+            fatGoal = 0
+            return
+        }
+        let p = NutritionCalculatorService.getProteinRecommendation(weightInKg: w).suggested
+        let f = NutritionCalculatorService.getFatRecommendation(weightInKg: w).suggested
+        let c = NutritionCalculatorService.getCarbsRecommendation(weightInKg: w).suggested
+        proteinGoal = Double(p)
+        fatGoal = Double(f)
+        carbsGoal = Double(c)
     }
 }
 
