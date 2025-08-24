@@ -106,7 +106,7 @@ struct MainAppView: View {
     let onLogout: () -> Void
     
     var body: some View {
-        NewNutritionTrackerView(user: user, onLogout: onLogout)
+        HomeView(user: user, onLogout: onLogout)
             .onShake {
                 // 開發用：搖動裝置可以登出
                 #if DEBUG
