@@ -10,6 +10,7 @@ import SwiftData
 
 struct NewNutritionTrackerView: View {
     let user: UserProfile
+    let onLogout: () -> Void
     
     @Environment(\.modelContext) private var modelContext
     
@@ -62,7 +63,7 @@ struct NewNutritionTrackerView: View {
         ZStack {
             Color.backgroundGray.opacity(0.3).ignoresSafeArea()
             VStack(spacing: 0) {
-                HeaderView(user: user)
+                HeaderView(user: user, onLogout: onLogout)
                 ScrollView {
                     VStack(spacing: 24) {
                         NutritionProgressSection(nutritionData: nutritionData)
@@ -121,6 +122,6 @@ struct NewNutritionTrackerView: View {
     sampleMeal2.user = sampleUser
     container.mainContext.insert(sampleMeal2)
     
-    return NewNutritionTrackerView(user: sampleUser)
+    return NewNutritionTrackerView(user: sampleUser, onLogout: { print("Preview logout action") })
         .modelContainer(container)
 }

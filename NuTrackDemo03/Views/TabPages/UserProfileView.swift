@@ -17,6 +17,8 @@ struct UserProfileView: View {
     private let isFirstLogin: Bool
     // 首次登入完成時回呼（由 App 入口決定是否提供）
     private let onCompleteSetup: (() -> Void)?
+    // 登出回呼
+    private let onLogout: () -> Void
     
     // --- Local State for UI controls ---
     @State private var weightInput: String
@@ -27,12 +29,14 @@ struct UserProfileView: View {
     @FocusState private var isWeightFieldFocused: Bool
     
     @State private var showWeightValidationError = false
+    @State private var isShowingDeleteAlert = false
 
     // --- Initializer ---
-    init(user: UserProfile, isFirstLogin: Bool? = nil, onCompleteSetup: (() -> Void)? = nil) {
+    init(user: UserProfile, isFirstLogin: Bool? = nil, onCompleteSetup: (() -> Void)? = nil, onLogout: @escaping () -> Void = {}) {
         self.user = user
         self.isFirstLogin = isFirstLogin ?? (user.weightInKg == nil)
         self.onCompleteSetup = onCompleteSetup
+        self.onLogout = onLogout
         // Initialize state from the user model
         self._weightInput = State(initialValue: String(format: "%.1f", user.weightInKg ?? 70.0))
         self._carbsSliderValue = State(initialValue: Double(user.dailyCarbsGoal))
@@ -82,6 +86,11 @@ struct UserProfileView: View {
                     nutritionGoalsSection // Renamed from nutritionSlidersSection for clarity
                     totalCaloriesSection
                     
+                    if !isFirstLogin {
+                        deleteAccountSection
+                            .padding(.top, 20)
+                    }
+                    
                     Spacer()
                 }
                 .padding(20)
@@ -106,6 +115,12 @@ struct UserProfileView: View {
             Button("確定", role: .cancel) {}
         } message: {
             Text("請輸入有效的體重範圍 (30.0 - 300.0 公斤)。")
+        }
+        .alert("確定要刪除帳號嗎？", isPresented: $isShowingDeleteAlert) {
+            Button("確認刪除", role: .destructive, action: deleteUser)
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("此操作將永久刪除您的所有資料，包含餐點紀錄，且無法復原。")
         }
         .onAppear {
             // 首次登入預先套用建議值
@@ -272,6 +287,19 @@ struct UserProfileView: View {
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
     }
     
+    private var deleteAccountSection: some View {
+        Button(role: .destructive) {
+            isShowingDeleteAlert = true
+        } label: {
+            Label("刪除帳號", systemImage: "trash.fill")
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.red.opacity(0.1))
+                .foregroundColor(.red)
+                .cornerRadius(12)
+        }
+    }
+    
     // MARK: - Helper Functions
     
     private func saveSettings() {
@@ -302,6 +330,18 @@ struct UserProfileView: View {
     
     private func isValid(weight: Double) -> Bool {
         weight >= 30.0 && weight <= 300.0
+    }
+    
+    private func deleteUser() {
+        modelContext.delete(user)
+        do {
+            try modelContext.save()
+            // Call the logout callback to trigger view switch in the main App
+            onLogout()
+        } catch {
+            // For production, you might want to show an error alert to the user
+            print("Failed to delete user and save context: \(error)")
+        }
     }
     
     private func updateGoalsForWeight(forceApply: Bool) {
@@ -369,6 +409,6 @@ struct NutritionSliderView: View {
     
     container.mainContext.insert(sampleUser)
     
-    return UserProfileView(user: sampleUser)
+    return UserProfileView(user: sampleUser, onLogout: { print("Preview logout action") })
         .modelContainer(container)
 }
