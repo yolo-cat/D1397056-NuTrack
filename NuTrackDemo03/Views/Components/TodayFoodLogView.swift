@@ -9,6 +9,8 @@ import SwiftUI
 
 struct TodayFoodLogView: View {
     let foodEntries: [MealEntry]
+    var onDelete: ((IndexSet) -> Void)? = nil
+    
     @State private var animatedItems: Set<UUID> = []
     
     var body: some View {
@@ -25,19 +27,19 @@ struct TodayFoodLogView: View {
             }
             
             LazyVStack(spacing: 12) {
-                ForEach(Array(foodEntries.enumerated()), id: \.element.id) { index, entry in
+                ForEach(foodEntries) { entry in
                     FoodEntryRowView(entry: entry)
                         .scaleEffect(animatedItems.contains(entry.id) ? 1.0 : 0.8)
                         .opacity(animatedItems.contains(entry.id) ? 1.0 : 0)
                         .animation(
-                            .spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)
-                            .delay(Double(index) * 0.1),
+                            .spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0),
                             value: animatedItems.contains(entry.id)
                         )
                         .onAppear {
                             animatedItems.insert(entry.id)
                         }
                 }
+                .onDelete(perform: onDelete)
             }
         }
         .onAppear {

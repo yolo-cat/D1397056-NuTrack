@@ -13,21 +13,27 @@ struct NewNutritionTrackerView: View {
     let onLogout: () -> Void
     
     @Environment(\.modelContext) private var modelContext
+    @Query private var mealEntries: [MealEntry]
     
     @State private var showAddNutrition = false
     
-    private var mealEntries: [MealEntry] {
+    init(user: UserProfile, onLogout: @escaping () -> Void) {
+        self.user = user
+        self.onLogout = onLogout
+        
+        // Dynamically configure the @Query to fetch meal entries
+        // for the current user and for today only.
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: .now)
         let endOfToday = calendar.date(byAdding: .day, value: 1, to: startOfToday)!
         let userID = user.id
-        let descriptor = FetchDescriptor<MealEntry>(
-            predicate: #Predicate<MealEntry> {
+        
+        self._mealEntries = Query(
+            filter: #Predicate<MealEntry> {
                 $0.user?.id == userID && $0.timestamp >= startOfToday && $0.timestamp < endOfToday
             },
-            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            sort: [SortDescriptor(\.timestamp, order: .reverse)]
         )
-        return (try? modelContext.fetch(descriptor)) ?? []
     }
     
     // MARK: - Computed Properties
@@ -67,7 +73,7 @@ struct NewNutritionTrackerView: View {
                 ScrollView {
                     VStack(spacing: 24) {
                         NutritionProgressSection(nutritionData: nutritionData)
-                        TodayFoodLogView(foodEntries: foodLogEntries)
+                        TodayFoodLogView(foodEntries: foodLogEntries, onDelete: deleteMeal)
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 80) // Add padding for floating button
@@ -88,6 +94,15 @@ struct NewNutritionTrackerView: View {
     }
     
     // MARK: - Helper Functions
+    
+    private func deleteMeal(at offsets: IndexSet) {
+        withAnimation {
+            for index in offsets {
+                let mealToDelete = mealEntries[index]
+                modelContext.delete(mealToDelete)
+            }
+        }
+    }
     
     private func addNutritionEntry(_ nutritionInfo: NutritionInfo) {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
