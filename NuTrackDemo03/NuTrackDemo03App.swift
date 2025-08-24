@@ -42,6 +42,7 @@ struct NuTrackDemo03App: App {
                 }
             }
             .animation(.easeInOut(duration: 0.4), value: currentUser?.id)
+            .task { loadMostRecentUserIfExists() }
             // 暫時註解掉種子數據初始化
             // .onAppear {
             //     Task { @MainActor in
@@ -50,6 +51,26 @@ struct NuTrackDemo03App: App {
             // }
         }
         .modelContainer(modelContainer)
+    }
+
+    /// 若資料庫已有使用者，啟動時自動載入最近一次登入的使用者
+    private func loadMostRecentUserIfExists() {
+        let context = modelContainer.mainContext
+        do {
+            let users = try context.fetch(FetchDescriptor<UserProfile>())
+            guard !users.isEmpty else { return }
+            let sorted = users.sorted { (lhs, rhs) in
+                let l = lhs.lastLoginAt ?? .distantPast
+                let r = rhs.lastLoginAt ?? .distantPast
+                if l == r { return lhs.name < rhs.name }
+                return l > r
+            }
+            withAnimation {
+                self.currentUser = sorted.first
+            }
+        } catch {
+            print("啟動時載入最近使用者失敗: \(error)")
+        }
     }
 }
 
