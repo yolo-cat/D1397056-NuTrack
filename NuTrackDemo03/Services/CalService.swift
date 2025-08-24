@@ -22,6 +22,10 @@ struct NutritionCalculatorService {
     /// - Parameter weightInKg: 使用者體重（公斤）
     /// - Returns: RecommendationRange（最小、最大、建議值）
     static func getProteinRecommendation(weightInKg: Double) -> RecommendationRange {
+        guard (30.0...300.0).contains(weightInKg) else {
+            return RecommendationRange(min: 0, max: 0, suggested: 0)
+        }
+
         let minGramsPerKg = 0.8
         let maxGramsPerKg = 2.2
         let suggestedGramsPerKg = 1.5
@@ -37,6 +41,10 @@ struct NutritionCalculatorService {
     /// - Parameter weightInKg: 使用者體重（公斤）
     /// - Returns: RecommendationRange（最小、最大、建議值）
     static func getFatRecommendation(weightInKg: Double) -> RecommendationRange {
+        guard (30.0...300.0).contains(weightInKg) else {
+            return RecommendationRange(min: 0, max: 0, suggested: 0)
+        }
+
         let minGramsPerKg = 0.3
         let maxGramsPerKg = 0.8
         let suggestedGramsPerKg = 0.5
@@ -52,6 +60,10 @@ struct NutritionCalculatorService {
     /// - Parameter weightInKg: 使用者體重（公斤）
     /// - Returns: RecommendationRange（最小、最大、建議值）
     static func getCarbsRecommendation(weightInKg: Double) -> RecommendationRange {
+        guard (30.0...300.0).contains(weightInKg) else {
+            return RecommendationRange(min: 0, max: 0, suggested: 0)
+        }
+
         let minGramsPerKg = 3.0
         let maxGramsPerKg = 10.0
         let suggestedGramsPerKg = 5.0

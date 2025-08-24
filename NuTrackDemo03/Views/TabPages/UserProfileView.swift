@@ -30,18 +30,34 @@ struct UserProfileView: View {
     
     @State private var showWeightValidationError = false
     @State private var isShowingDeleteAlert = false
+    @State private var weightForRecommendation: Double
 
     // --- Initializer ---
     init(user: UserProfile, isFirstLogin: Bool? = nil, onCompleteSetup: (() -> Void)? = nil, onLogout: @escaping () -> Void = {}) {
         self.user = user
-        self.isFirstLogin = isFirstLogin ?? (user.weightInKg == nil)
+        let isFirstTimeSetup = isFirstLogin ?? (user.weightInKg == nil)
+        self.isFirstLogin = isFirstTimeSetup
         self.onCompleteSetup = onCompleteSetup
         self.onLogout = onLogout
+
         // Initialize state from the user model
-        self._weightInput = State(initialValue: String(format: "%.1f", user.weightInKg ?? 70.0))
-        self._carbsSliderValue = State(initialValue: Double(user.dailyCarbsGoal))
-        self._proteinSliderValue = State(initialValue: Double(user.dailyProteinGoal))
-        self._fatSliderValue = State(initialValue: Double(user.dailyFatGoal))
+        if let weight = user.weightInKg {
+            self._weightInput = State(initialValue: String(format: "%.1f", weight))
+            self._weightForRecommendation = State(initialValue: weight)
+        } else {
+            self._weightInput = State(initialValue: "")
+            self._weightForRecommendation = State(initialValue: 0)
+        }
+        
+        if isFirstTimeSetup {
+            self._carbsSliderValue = State(initialValue: 0)
+            self._proteinSliderValue = State(initialValue: 0)
+            self._fatSliderValue = State(initialValue: 0)
+        } else {
+            self._carbsSliderValue = State(initialValue: Double(user.dailyCarbsGoal))
+            self._proteinSliderValue = State(initialValue: Double(user.dailyProteinGoal))
+            self._fatSliderValue = State(initialValue: Double(user.dailyFatGoal))
+        }
     }
 
     // --- Computed Properties for Dynamic Calculation ---
@@ -54,7 +70,7 @@ struct UserProfileView: View {
     }
     
     private var currentWeight: Double {
-        Double(weightInput) ?? user.weightInKg ?? 70.0
+        Double(weightInput) ?? 0
     }
     
     private var isValidWeight: Bool {
@@ -122,13 +138,25 @@ struct UserProfileView: View {
         } message: {
             Text("此操作將永久刪除您的所有資料，包含餐點紀錄，且無法復原。")
         }
-        .onAppear {
-            // 首次登入預先套用建議值
-            if isFirstLogin { updateGoalsForWeight(forceApply: true) }
-        }
-        .onChange(of: weightInput) { _, _ in
-            // 體重變更時：首次登入自動套用建議；非首次僅更新範圍，不覆蓋使用者設定
-            updateGoalsForWeight(forceApply: isFirstLogin)
+        .onChange(of: isWeightFieldFocused) { _, isFocused in
+            if !isFocused {
+                // 1. Update the weight used for calculating recommendations
+                let newWeight = Double(weightInput) ?? 0
+                weightForRecommendation = newWeight
+                
+                // 2. Validate the input and show an alert if necessary
+                validateWeightRange()
+                
+                // 3. Recalculate recommendation ranges based on the new weight
+                let carbsRec = NutritionCalculatorService.getCarbsRecommendation(weightInKg: newWeight)
+                let proteinRec = NutritionCalculatorService.getProteinRecommendation(weightInKg: newWeight)
+                let fatRec = NutritionCalculatorService.getFatRecommendation(weightInKg: newWeight)
+                
+                // 4. Clamp the current slider values to the new valid ranges to prevent crashes
+                carbsSliderValue = max(Double(carbsRec.min), min(carbsSliderValue, Double(carbsRec.max)))
+                proteinSliderValue = max(Double(proteinRec.min), min(proteinSliderValue, Double(proteinRec.max)))
+                fatSliderValue = max(Double(fatRec.min), min(fatSliderValue, Double(fatRec.max)))
+            }
         }
     }
 
@@ -174,16 +202,16 @@ struct UserProfileView: View {
     
     private var userAvatarSection: some View {
         VStack(spacing: 12) {
-            Image(systemName: "person.circle.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 80, height: 80)
-                .foregroundColor(Color.primaryBlue.opacity(0.8))
-            
-            Text(user.name)
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
+//            Image(systemName: "person.circle.fill")
+//                .resizable()
+//                .scaledToFit()
+//                .frame(width: 80, height: 80)
+//                .foregroundColor(Color.primaryBlue.opacity(0.8))
+//            
+//            Text(user.name)
+//                .font(.title)
+//                .fontWeight(.bold)
+//                .foregroundColor(.primary)
         }
     }
     
@@ -232,7 +260,7 @@ struct UserProfileView: View {
             NutritionSliderView(
                 label: "碳水化合物",
                 value: $carbsSliderValue,
-                recommendation: NutritionCalculatorService.getCarbsRecommendation(weightInKg: currentWeight),
+                recommendation: NutritionCalculatorService.getCarbsRecommendation(weightInKg: weightForRecommendation),
                 color: .carbsColor,
                 disabled: !isValidWeight
             )
@@ -240,7 +268,7 @@ struct UserProfileView: View {
             NutritionSliderView(
                 label: "蛋白質",
                 value: $proteinSliderValue,
-                recommendation: NutritionCalculatorService.getProteinRecommendation(weightInKg: currentWeight),
+                recommendation: NutritionCalculatorService.getProteinRecommendation(weightInKg: weightForRecommendation),
                 color: .proteinColor,
                 disabled: !isValidWeight
             )
@@ -248,7 +276,7 @@ struct UserProfileView: View {
             NutritionSliderView(
                 label: "脂肪",
                 value: $fatSliderValue,
-                recommendation: NutritionCalculatorService.getFatRecommendation(weightInKg: currentWeight),
+                recommendation: NutritionCalculatorService.getFatRecommendation(weightInKg: weightForRecommendation),
                 color: .fatColor,
                 disabled: !isValidWeight
             )
@@ -302,6 +330,19 @@ struct UserProfileView: View {
     
     // MARK: - Helper Functions
     
+    private func validateWeightRange() {
+        // Only validate if the input is a valid number.
+        // An empty field is considered valid until the user tries to save.
+        guard !weightInput.isEmpty, let weight = Double(weightInput) else {
+            return
+        }
+        
+        // If the number is outside the valid range, show the alert.
+        if !isValid(weight: weight) {
+            showWeightValidationError = true
+        }
+    }
+    
     private func saveSettings() {
         guard let weight = Double(weightInput), isValid(weight: weight) else {
             showWeightValidationError = true
@@ -343,18 +384,6 @@ struct UserProfileView: View {
             print("Failed to delete user and save context: \(error)")
         }
     }
-    
-    private func updateGoalsForWeight(forceApply: Bool) {
-        guard isValidWeight, let w = Double(weightInput) else { return }
-        let p = NutritionCalculatorService.getProteinRecommendation(weightInKg: w).suggested
-        let f = NutritionCalculatorService.getFatRecommendation(weightInKg: w).suggested
-        let c = NutritionCalculatorService.getCarbsRecommendation(weightInKg: w).suggested
-        if forceApply || (carbsSliderValue == 0 && proteinSliderValue == 0 && fatSliderValue == 0) {
-            proteinSliderValue = Double(p)
-            fatSliderValue = Double(f)
-            carbsSliderValue = Double(c)
-        }
-    }
 }
 
 // MARK: - Child View for Nutrition Slider
@@ -378,13 +407,22 @@ struct NutritionSliderView: View {
                     .foregroundColor(color)
             }
             
-            Slider(value: $value, in: Double(recommendation.min)...Double(recommendation.max), step: 1)
-                .tint(color)
-                .disabled(disabled)
+            // CRASH PREVENTION: Ensure the slider range is valid before creating it.
+            // A range where max is not greater than min will crash with a positive step.
+            if recommendation.max > recommendation.min {
+                Slider(value: $value, in: Double(recommendation.min)...Double(recommendation.max), step: 1)
+                    .tint(color)
+                    .disabled(disabled)
+            } else {
+                // Render a disabled slider with a dummy range to prevent crashing
+                // while maintaining UI layout. The value is clamped to 0 in the parent view,
+                // so it's safe to use a 0...1 dummy range here.
+                Slider(value: $value, in: 0...1)
+                    .tint(color)
+                    .disabled(true)
+            }
             
             HStack {
-                Text("建議: \(recommendation.suggested)g")
-                Spacer()
                 Text("範圍: \(recommendation.min) - \(recommendation.max)g")
             }
             .font(.caption)
