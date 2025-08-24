@@ -73,7 +73,7 @@ struct HomeView: View {
                 ScrollView {
                     VStack(spacing: 24) {
                         ProgSect(nutritionData: nutritionData)
-                        TodayLog(foodEntries: foodLogEntries)
+                        TodayLog(foodEntries: foodLogEntries, onDelete: deleteMeal)
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 80) // Add padding for floating button
@@ -93,31 +93,19 @@ struct HomeView: View {
         .padding(.bottom, 10)
     }
     
-    // MARK: - Helper Functions
+    // MARK: - Data Handlers
     
-    private func deleteMeal(at offsets: IndexSet) {
+    private func deleteMeal(meal: MealEntry) {
         withAnimation {
-            for index in offsets {
-                let mealToDelete = mealEntries[index]
-                modelContext.delete(mealToDelete)
-            }
-            // 顯式保存刪除結果
-            try? modelContext.save()
+            let service = MealDataService(modelContext: modelContext)
+            service.delete(meal: meal)
         }
     }
     
     private func addNutritionEntry(_ nutritionInfo: NutritionInfo) {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            let newEntry = MealEntry(
-                name: nutritionInfo.name,
-                carbs: nutritionInfo.carbs,
-                protein: nutritionInfo.protein,
-                fat: nutritionInfo.fat
-            )
-            newEntry.user = user
-            modelContext.insert(newEntry)
-            // 顯式保存新增結果
-            try? modelContext.save()
+            let service = MealDataService(modelContext: modelContext)
+            service.addMeal(info: nutritionInfo, for: user)
         }
     }
 }
@@ -326,8 +314,8 @@ struct ProgBar: View {
 // MARK: - Components • Today Food Log (List + Row)
 struct TodayLog: View {
     let foodEntries: [MealEntry]
+    let onDelete: (MealEntry) -> Void
     @State private var animatedItems: Set<UUID> = []
-    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         VStack(spacing: 16) {
@@ -357,14 +345,14 @@ struct TodayLog: View {
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
-                                delete(entry)
+                                onDelete(entry)
                             } label: {
                                 Label("刪除", systemImage: "trash")
                             }
                         }
                         .contextMenu {
                             Button(role: .destructive) {
-                                delete(entry)
+                                onDelete(entry)
                             } label: {
                                 Label("刪除", systemImage: "trash")
                             }
@@ -384,14 +372,6 @@ struct TodayLog: View {
         formatter.dateFormat = "yyyy年MM月dd日"
         formatter.locale = Locale(identifier: "zh_TW")
         return formatter.string(from: Date())
-    }
-    
-    private func delete(_ entry: MealEntry) {
-        withAnimation {
-            modelContext.delete(entry)
-            // 顯式保存刪除結果
-            try? modelContext.save()
-        }
     }
 }
 
@@ -508,8 +488,13 @@ struct LogRow: View {
         MealEntry(name: "晚餐", timestamp: Date().addingTimeInterval(3600), carbs: 30, protein: 10, fat: 5)
     ]
     items.forEach { $0.user = u; container.mainContext.insert($0) }
-    return ScrollView { TodayLog(foodEntries: items).padding() }
-        .modelContainer(container)
+    return ScrollView {
+        TodayLog(foodEntries: items, onDelete: { meal in
+            print("Preview: Deleting meal \(meal.id)")
+        })
+        .padding()
+    }
+    .modelContainer(container)
 }
 
 #Preview("LogRow") {
