@@ -84,6 +84,9 @@ struct UserProfileView: View {
                 }
             }
         }
+        .onTapGesture {
+            isWeightFieldFocused = false
+        }
         .navigationBarHidden(true)
         .alert("體重無效", isPresented: $showWeightValidationError) {
             Button("確定", role: .cancel) {}
