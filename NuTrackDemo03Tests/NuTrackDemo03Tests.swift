@@ -139,63 +139,77 @@ struct NuTrackDemo03Tests {
     // MARK: - CalorieRingView Tests
     
     @Test func testNutritionProgressCalculation() async throws {
-        // Test data with known progress values
-        let testData = NutritionData(
-            caloriesConsumed: 1000,
-            caloriesBurned: 200,
-            caloriesGoal: 2000,
-            carbs: NutrientData(current: 60, goal: 120, unit: "g"),    // 50% progress
-            protein: NutrientData(current: 90, goal: 180, unit: "g"), // 50% progress
-            fat: NutrientData(current: 90, goal: 180, unit: "g")      // 50% progress
-        )
+        // Test data with known progress values using the ViewModel approach
+        let testUser = UserProfile(name: "Test User", weightInKg: 70.0)
+        // Set up user goals
+        testUser.dailyCarbsGoal = 120
+        testUser.dailyProteinGoal = 180  
+        testUser.dailyFatGoal = 180
         
-        // Test individual progress calculations
+        let testMeals = [
+            MealEntry(name: "餐點1", carbs: 60, protein: 90, fat: 90)
+        ]
+        
+        let testData = NutritionSummaryViewModel(user: testUser, meals: testMeals)
+        
+        // Test individual progress calculations (should all be 50%)
         #expect(testData.carbs.progress == 0.5)
-        #expect(testData.protein.progress == 0.5)
+        #expect(testData.protein.progress == 0.5) 
         #expect(testData.fat.progress == 0.5)
-        
-        // Test overall nutrition balance
-        #expect(testData.totalNutrientProgress == 0.5)
     }
     
     @Test func testNutritionProgressOverGoal() async throws {
-        // Test data with over-goal values
-        let testData = NutritionData(
-            caloriesConsumed: 2000,
-            caloriesBurned: 200,
-            caloriesGoal: 2000,
-            carbs: NutrientData(current: 180, goal: 120, unit: "g"),  // 150% progress
-            protein: NutrientData(current: 180, goal: 180, unit: "g"), // 100% progress
-            fat: NutrientData(current: 90, goal: 180, unit: "g")      // 50% progress
-        )
+        // Test data with over-goal values using the ViewModel approach
+        let testUser = UserProfile(name: "Test User", weightInKg: 70.0)
+        // Set up user goals  
+        testUser.dailyCarbsGoal = 120
+        testUser.dailyProteinGoal = 180
+        testUser.dailyFatGoal = 180
+        
+        let testMeals = [
+            MealEntry(name: "餐點1", carbs: 180, protein: 180, fat: 90) // 150%, 100%, 50%
+        ]
+        
+        let testData = NutritionSummaryViewModel(user: testUser, meals: testMeals)
         
         // Test progress calculations
         #expect(testData.carbs.progress == 1.5)
         #expect(testData.protein.progress == 1.0)
         #expect(testData.fat.progress == 0.5)
-        
-        // Test overall nutrition balance
-        #expect(testData.totalNutrientProgress == 1.0) // (1.5 + 1.0 + 0.5) / 3
     }
     
     @Test func testNutrientDataPercentageCalculation() async throws {
-        let nutrientData = NutrientData(current: 75, goal: 150, unit: "g")
+        let testUser = UserProfile(name: "Test User", weightInKg: 70.0)
+        testUser.dailyCarbsGoal = 150
+        
+        let testMeals = [
+            MealEntry(name: "餐點", carbs: 75, protein: 0, fat: 0)
+        ]
+        
+        let viewModel = NutritionSummaryViewModel(user: testUser, meals: testMeals)
         
         // Test progress (should be 0.5)
-        #expect(nutrientData.progress == 0.5)
+        #expect(viewModel.carbs.progress == 0.5)
         
         // Test percentage (should be 50)
-        #expect(nutrientData.percentage == 50)
+        #expect(viewModel.carbs.percentage == 50)
     }
     
     @Test func testNutrientDataZeroGoalEdgeCase() async throws {
-        let nutrientData = NutrientData(current: 50, goal: 0, unit: "g")
+        let testUser = UserProfile(name: "Test User", weightInKg: 70.0)
+        testUser.dailyCarbsGoal = 0 // Zero goal to test edge case
+        
+        let testMeals = [
+            MealEntry(name: "餐點", carbs: 50, protein: 0, fat: 0)
+        ]
+        
+        let viewModel = NutritionSummaryViewModel(user: testUser, meals: testMeals)
         
         // Test progress with zero goal (should be 0.0 to avoid division by zero)
-        #expect(nutrientData.progress == 0.0)
+        #expect(viewModel.carbs.progress == 0.0)
         
         // Test percentage with zero goal (should be 0)
-        #expect(nutrientData.percentage == 0)
+        #expect(viewModel.carbs.percentage == 0)
     }
 
 }

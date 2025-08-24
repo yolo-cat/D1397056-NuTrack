@@ -31,21 +31,8 @@ struct NewNutritionTrackerView: View {
     
     // MARK: - Computed Properties
     
-    private var nutritionData: NutritionData {
-        let totalCarbs = mealEntries.reduce(0) { $0 + $1.carbs }
-        let totalProtein = mealEntries.reduce(0) { $0 + $1.protein }
-        let totalFat = mealEntries.reduce(0) { $0 + $1.fat }
-
-        let carbCalories = totalCarbs * 4
-        let proteinCalories = totalProtein * 4
-        let fatCalories = totalFat * 9
-
-        return NutritionData(
-            carbs: .init(current: totalCarbs, goal: user.dailyCarbsGoal, unit: "g"),
-            protein: .init(current: totalProtein, goal: user.dailyProteinGoal, unit: "g"),
-            fat: .init(current: totalFat, goal: user.dailyFatGoal, unit: "g"),
-            macronutrientCaloriesDistribution: .init(carbs: carbCalories, protein: proteinCalories, fat: fatCalories)
-        )
+    private var nutritionData: NutritionSummaryViewModel {
+        return NutritionSummaryViewModel(user: user, meals: mealEntries)
     }
     
     private var foodLogEntries: [MealEntry] {
