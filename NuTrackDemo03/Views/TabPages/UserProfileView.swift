@@ -34,7 +34,7 @@ struct UserProfileView: View {
 
     // --- Computed Properties for Dynamic Calculation ---
     private var totalCalories: Int {
-        HealthCalculatorService.calculateTotalCalories(
+        NutritionCalculatorService.calculateTotalCalories(
             carbs: carbsSliderValue,
             protein: proteinSliderValue,
             fat: fatSliderValue
@@ -177,21 +177,21 @@ struct UserProfileView: View {
             NutritionSliderView(
                 label: "碳水化合物",
                 value: $carbsSliderValue,
-                recommendation: HealthCalculatorService.getCarbsRecommendation(weightInKg: currentWeight),
+                recommendation: NutritionCalculatorService.getCarbsRecommendation(weightInKg: currentWeight),
                 color: .carbsColor
             )
             
             NutritionSliderView(
                 label: "蛋白質",
                 value: $proteinSliderValue,
-                recommendation: HealthCalculatorService.getProteinRecommendation(weightInKg: currentWeight),
+                recommendation: NutritionCalculatorService.getProteinRecommendation(weightInKg: currentWeight),
                 color: .proteinColor
             )
             
             NutritionSliderView(
                 label: "脂肪",
                 value: $fatSliderValue,
-                recommendation: HealthCalculatorService.getFatRecommendation(weightInKg: currentWeight),
+                recommendation: NutritionCalculatorService.getFatRecommendation(weightInKg: currentWeight),
                 color: .fatColor
             )
         }

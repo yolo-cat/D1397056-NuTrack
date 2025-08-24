@@ -17,10 +17,6 @@ struct NuTrackDemo03App: App {
     init() {
         do {
             modelContainer = try ModelContainer(for: UserProfile.self, MealEntry.self)
-            let modelContainer = self.modelContainer
-            Task { @MainActor in
-                DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
-            }
         } catch {
             fatalError("無法建立 ModelContainer: \(error)")
         }
@@ -46,6 +42,12 @@ struct NuTrackDemo03App: App {
                 }
             }
             .animation(.easeInOut(duration: 0.4), value: currentUser?.id)
+            // 暫時註解掉種子數據初始化
+            // .onAppear {
+            //     Task { @MainActor in
+            //         DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
+            //     }
+            // }
         }
         .modelContainer(modelContainer)
     }
@@ -57,28 +59,13 @@ struct MainAppView: View {
     let onLogout: () -> Void
     
     var body: some View {
-        Group {
-            if isFirstTimeUser {
-                UserProfileSetupView(user: user) {
-                    // 設置完成後會自動重新評估 isFirstTimeUser
-                    // 因為 user.weightInKg 將不再是 nil
-                }
-            } else {
-                // NewNutritionTrackerView 也需要被重構以接收 UserProfile
-                NewNutritionTrackerView(user: user)
+        NewNutritionTrackerView(user: user)
+            .onShake {
+                // 開發用：搖動裝置可以登出
+                #if DEBUG
+                onLogout()
+                #endif
             }
-        }
-        .onShake {
-            // 開發用：搖動裝置可以登出
-            #if DEBUG
-            onLogout()
-            #endif
-        }
-    }
-    
-    /// 判斷是否為首次使用者（基於是否設置了體重）
-    private var isFirstTimeUser: Bool {
-        return user.weightInKg == nil
     }
 }
 

@@ -6,7 +6,7 @@ import SwiftData
 @Model
 final class MealEntry {
     @Attribute(.unique) var id: UUID
-    var name: String
+    var name: String?
     var timestamp: Date
     var carbs: Int
     var protein: Int
@@ -18,7 +18,7 @@ final class MealEntry {
     
     var user: UserProfile?
     
-    init(id: UUID = UUID(), name: String, timestamp: Date = .now, carbs: Int, protein: Int, fat: Int) {
+    init(id: UUID = UUID(), name: String? = nil, timestamp: Date = .now, carbs: Int, protein: Int, fat: Int) {
         self.id = id
         self.name = name
         self.timestamp = timestamp

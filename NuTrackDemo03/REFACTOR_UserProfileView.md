@@ -97,7 +97,7 @@ private var totalCaloriesSection: some View { /* ... */ }
 *   **`nutritionSlidersSection`**：
     *   將此區塊進一步拆分為三個獨立的滑桿元件，或使用 `VStack` 組織。
     *   為每個滑桿（碳水、蛋白質、脂肪）建立一個包含「標題」、「目前數值」、「滑桿」和「建議範圍」的複合元件。
-    *   視覺上標示出 `HealthCalculatorService` 提供的建議範圍（min/max），幫助使用者做出合理設定。
+    *   視覺上標示出 `NutritionCalculatorService` 提供的建議範圍（min/max），幫助使用者做出合理設定。
 *   **`totalCaloriesSection`**：
     *   將總熱量顯示設計得更為突出。可以將其放置在一個視覺上獨立的卡片中，使用較大的字體和醒目的顏色，並加上 "預估總熱量" 的標題。
 

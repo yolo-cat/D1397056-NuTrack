@@ -1,4 +1,4 @@
-// /Services/HealthCalculatorService.swift
+// /Services/NutritionCalculatorService.swift
 
 import Foundation
 
@@ -9,7 +9,7 @@ struct RecommendationRange {
     let suggested: Int
 }
 
-struct HealthCalculatorService {
+struct NutritionCalculatorService {
 
     static func getProteinRecommendation(weightInKg: Double) -> RecommendationRange {
         let minGramsPerKg = 1.6
