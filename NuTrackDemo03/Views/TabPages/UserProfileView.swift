@@ -18,6 +18,8 @@ struct UserProfileView: View {
     @State private var proteinSliderValue: Double
     @State private var fatSliderValue: Double
     
+    @FocusState private var isWeightFieldFocused: Bool
+    
     @State private var showWeightValidationError = false
 
     // --- Initializer ---
@@ -71,15 +73,22 @@ struct UserProfileView: View {
                 .padding(20)
             }
             .scrollDismissesKeyboard(.immediately) // Improved keyboard handling
+            .toolbar {
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        Button("完成") {
+                            isWeightFieldFocused = false
+                        }
+                    }
+                }
+            }
         }
         .navigationBarHidden(true)
         .alert("體重無效", isPresented: $showWeightValidationError) {
             Button("確定", role: .cancel) {}
         } message: {
             Text("請輸入有效的體重範圍 (30.0 - 300.0 公斤)。")
-        }
-        .onTapGesture {
-            hideKeyboard()
         }
     }
 
@@ -130,6 +139,9 @@ struct UserProfileView: View {
                 TextField("輸入體重", text: $weightInput)
                     .font(.system(size: 20, weight: .bold))
                     .keyboardType(.decimalPad)
+                    .focused($isWeightFieldFocused)
+                    .submitLabel(.done)
+                    .onSubmit { isWeightFieldFocused = false }
                     .padding(15)
                     .background(Color.white.opacity(0.8))
                     .cornerRadius(12)
@@ -230,10 +242,6 @@ struct UserProfileView: View {
     
     private func isValid(weight: Double) -> Bool {
         weight >= 30.0 && weight <= 300.0
-    }
-    
-    private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

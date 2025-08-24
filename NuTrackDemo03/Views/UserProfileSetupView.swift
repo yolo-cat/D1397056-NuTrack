@@ -16,6 +16,7 @@ struct UserProfileSetupView: View {
     @Environment(\.modelContext) private var modelContext
     
     @State private var weightInput: String = ""
+    @FocusState private var isWeightFieldFocused: Bool
     @State private var carbsGoal: Double = 250
     @State private var proteinGoal: Double = 125
     @State private var fatGoal: Double = 56
@@ -59,6 +60,19 @@ struct UserProfileSetupView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 20)
                 }
+                .toolbar {
+                    ToolbarItem(placement: .keyboard) {
+                        HStack {
+                            Spacer()
+                            Button("完成") {
+                                isWeightFieldFocused = false
+                            }
+                        }
+                    }
+                }
+            }
+            .onTapGesture {
+                isWeightFieldFocused = false
             }
         }
         .navigationBarHidden(true)
@@ -105,18 +119,18 @@ struct UserProfileSetupView: View {
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-            
             HStack {
                 TextField("請輸入體重", text: $weightInput)
                     .keyboardType(.decimalPad)
                     .textFieldStyle(.roundedBorder)
                     .font(.body)
-                
+                    .focused($isWeightFieldFocused)
+                    .submitLabel(.done)
+                    .onSubmit { isWeightFieldFocused = false }
                 Text("kg")
                     .font(.body)
                     .foregroundColor(.secondary)
             }
-            
             Text("建議範圍：30.0 - 300.0 公斤")
                 .font(.caption)
                 .foregroundColor(.secondary)

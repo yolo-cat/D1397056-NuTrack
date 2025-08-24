@@ -53,6 +53,9 @@ struct AddNutritionView: View {
                     successAnimationOverlay
                 }
             }
+            .onTapGesture {
+                focusedField = nil
+            }
             .navigationTitle("記錄營養")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -75,8 +78,14 @@ struct AddNutritionView: View {
                 ToolbarItem(placement: .keyboard) {
                     HStack {
                         Spacer()
-                        Button("完成") {
-                            focusedField = nil
+                        if focusedField == .fat {
+                            Button("完成") {
+                                focusedField = nil
+                            }
+                        } else {
+                            Button("下一個") {
+                                focusNextField()
+                            }
                         }
                     }
                 }
@@ -120,7 +129,10 @@ struct AddNutritionView: View {
                 .cornerRadius(8)
                 .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                 .focused($focusedField, equals: .name)
-                .submitLabel(.done)
+                .submitLabel(.next)
+                .onSubmit {
+                    focusNextField()
+                }
         }
         .padding(.horizontal, 20)
     }
@@ -265,6 +277,20 @@ struct AddNutritionView: View {
     
     // MARK: - Actions
     
+    private func focusNextField() {
+        switch focusedField {
+        case .name:
+            focusedField = .carbs
+        case .carbs:
+            focusedField = .protein
+        case .protein:
+            focusedField = .fat
+        case .fat, .none:
+            // It's the last field or no field is focused, dismiss the keyboard
+            focusedField = nil
+        }
+    }
+    
     private func addNutrition() {
         guard isInputValid else { return }
         
@@ -320,7 +346,7 @@ struct NutrientInputField: View {
             
             TextField("0", text: $value)
                 .keyboardType(.numberPad)
-                .submitLabel(.done)
+                .submitLabel(field == .fat ? .done : .next)
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(color)
@@ -337,9 +363,6 @@ struct NutrientInputField: View {
                     // 僅允許數字字元，移除非數字輸入（含貼上內容）
                     let filtered = newValue.filter { $0.isNumber }
                     if filtered != newValue { value = filtered }
-                }
-                .onSubmit {
-                    focus.wrappedValue = nil
                 }
         }
     }
