@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct NewNutritionTrackerView: View {
+struct HomeView: View {
     let user: UserProfile
     let onLogout: () -> Void
     
@@ -69,11 +69,11 @@ struct NewNutritionTrackerView: View {
         ZStack {
             Color.backgroundGray.opacity(0.3).ignoresSafeArea()
             VStack(spacing: 0) {
-                HeaderView(user: user, onLogout: onLogout)
+                HeadView(user: user, onLogout: onLogout)
                 ScrollView {
                     VStack(spacing: 24) {
-                        NutritionProgressSection(nutritionData: nutritionData)
-                        TodayFoodLogView(foodEntries: foodLogEntries)
+                        ProgSect(nutritionData: nutritionData)
+                        TodayLog(foodEntries: foodLogEntries)
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 80) // Add padding for floating button
@@ -119,7 +119,7 @@ struct NewNutritionTrackerView: View {
 }
 
 // MARK: - Components • Header (Top of screen)
-struct HeaderView: View {
+struct HeadView: View {
     let user: UserProfile
     let onLogout: () -> Void
     
@@ -159,18 +159,18 @@ struct HeaderView: View {
     }
 }
 
-#Preview("HeaderView") {
+#Preview("HeadView") {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: UserProfile.self, configurations: config)
     let sampleUser = UserProfile(name: "預覽用戶", weightInKg: 70)
     container.mainContext.insert(sampleUser)
-    return NavigationStack { HeaderView(user: sampleUser, onLogout: {}) }
+    return NavigationStack { HeadView(user: sampleUser, onLogout: {}) }
         .modelContainer(container)
         .padding()
 }
 
 // MARK: - Components • Nutrition Progress (Section + Bar)
-struct NutritionProgressSection: View {
+struct ProgSect: View {
     let nutritionData: NutritionData
     @State private var animationDelays: [Double] = [0, 0.2, 0.4]
     @State private var showProgress = false
@@ -185,7 +185,7 @@ struct NutritionProgressSection: View {
             }
             
             VStack(spacing: 16) {
-                NutritionProgressBar(
+                ProgBar(
                     title: "碳水化合物",
                     nutrientData: nutritionData.carbs,
                     calorieInfo: nutritionData.macronutrientCaloriesDistribution.carbs,
@@ -195,7 +195,7 @@ struct NutritionProgressSection: View {
                 .opacity(showProgress ? 1 : 0)
                 .animation(.easeInOut(duration: 0.8).delay(animationDelays[0]), value: showProgress)
                 
-                NutritionProgressBar(
+                ProgBar(
                     title: "蛋白質",
                     nutrientData: nutritionData.protein,
                     calorieInfo: nutritionData.macronutrientCaloriesDistribution.protein,
@@ -205,7 +205,7 @@ struct NutritionProgressSection: View {
                 .opacity(showProgress ? 1 : 0)
                 .animation(.easeInOut(duration: 0.8).delay(animationDelays[1]), value: showProgress)
                 
-                NutritionProgressBar(
+                ProgBar(
                     title: "脂肪",
                     nutrientData: nutritionData.fat,
                     calorieInfo: nutritionData.macronutrientCaloriesDistribution.fat,
@@ -224,7 +224,7 @@ struct NutritionProgressSection: View {
     }
 }
 
-struct NutritionProgressBar: View {
+struct ProgBar: View {
     let title: String
     let nutrientData: NutritionData.Nutrient
     let calorieInfo: Int
@@ -300,27 +300,27 @@ struct NutritionProgressBar: View {
     }
 }
 
-#Preview("NutritionProgressSection") {
-    NutritionProgressSection(nutritionData: .sample)
+#Preview("ProgSect") {
+    ProgSect(nutritionData: .sample)
         .padding()
         .background(Color.white)
 }
 
-#Preview("NutritionProgressBar") {
+#Preview("ProgBar") {
     let nutrient = NutritionData.Nutrient(current: 120, goal: 200, unit: "g")
-    return NutritionProgressBar(
-        title: "碳水化合物",
-        nutrientData: nutrient,
-        calorieInfo: 480,
-        color: .carbsColor,
-        showProgress: true
-    )
-    .padding()
-    .background(Color.white)
+    return ProgBar(
+         title: "碳水化合物",
+         nutrientData: nutrient,
+         calorieInfo: 480,
+         color: .carbsColor,
+         showProgress: true
+     )
+     .padding()
+     .background(Color.white)
 }
 
 // MARK: - Components • Today Food Log (List + Row)
-struct TodayFoodLogView: View {
+struct TodayLog: View {
     let foodEntries: [MealEntry]
     @State private var animatedItems: Set<UUID> = []
     
@@ -339,7 +339,7 @@ struct TodayFoodLogView: View {
             
             LazyVStack(spacing: 12) {
                 ForEach(Array(foodEntries.enumerated()), id: \.element.id) { index, entry in
-                    FoodEntryRowView(entry: entry)
+                    LogRow(entry: entry)
                         .scaleEffect(animatedItems.contains(entry.id) ? 1.0 : 0.8)
                         .opacity(animatedItems.contains(entry.id) ? 1.0 : 0)
                         .animation(
@@ -368,7 +368,7 @@ struct TodayFoodLogView: View {
     }
 }
 
-struct FoodEntryRowView: View {
+struct LogRow: View {
     let entry: MealEntry
     
     var body: some View {
@@ -433,7 +433,7 @@ struct FoodEntryRowView: View {
     }
 }
 
-#Preview("TodayFoodLogView") {
+#Preview("TodayLog") {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: UserProfile.self, MealEntry.self, configurations: config)
     let u = UserProfile(name: "預覽用戶")
@@ -444,108 +444,15 @@ struct FoodEntryRowView: View {
         MealEntry(name: "晚餐", timestamp: Date().addingTimeInterval(3600), carbs: 30, protein: 10, fat: 5)
     ]
     items.forEach { $0.user = u; container.mainContext.insert($0) }
-    return ScrollView { TodayFoodLogView(foodEntries: items).padding() }
+    return ScrollView { TodayLog(foodEntries: items).padding() }
         .modelContainer(container)
 }
 
-#Preview("FoodEntryRowView") {
+#Preview("LogRow") {
     let entry = MealEntry(name: "優格+燕麥", timestamp: Date(), carbs: 35, protein: 15, fat: 8)
-    return FoodEntryRowView(entry: entry)
+    return LogRow(entry: entry)
         .padding()
         .background(Color.white)
-}
-
-// MARK: - Components • Custom Tab (TabView + TabItem + Alternative Bar)
-struct CustomTabView: View {
-    @Binding var selectedTab: Int
-    let onAddMeal: () -> Void
-    
-    var body: some View {
-        ZStack {
-            // Main tab view
-            TabView(selection: $selectedTab) {
-                // Home Tab
-                Group { EmptyView() }
-                    .tabItem { Image(systemName: "house.fill"); Text("Home") }
-                    .tag(0)
-                
-                // Diary Tab
-                Group { EmptyView() }
-                    .tabItem { Image(systemName: "book.fill"); Text("Diary") }
-                    .tag(1)
-                
-                // Spacer for center button
-                Group { EmptyView() }
-                    .tabItem { Image(systemName: ""); Text("") }
-                    .tag(2)
-                
-                // Trends Tab
-                Group { EmptyView() }
-                    .tabItem { Image(systemName: "chart.line.uptrend.xyaxis"); Text("Trends") }
-                    .tag(3)
-                
-                // Settings Tab
-                Group { EmptyView() }
-                    .tabItem { Image(systemName: "gearshape.fill"); Text("Settings") }
-                    .tag(4)
-            }
-            .accentColor(Color.primaryBlue)
-            
-            // Floating Add Button
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            onAddMeal()
-                        }
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.primaryBlue)
-                                .frame(width: 60, height: 60)
-                                .shadow(color: Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
-                            Image(systemName: "plus")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
-                    Spacer()
-                }
-                .padding(.bottom, 30)
-            }
-        }
-    }
-}
-
-private struct _CustomTabPreviewWrapper: View {
-    @State private var tab = 0
-    var body: some View {
-        CustomTabView(selectedTab: $tab, onAddMeal: {})
-    }
-}
-
-#Preview("CustomTabView") {
-    _CustomTabPreviewWrapper()
-}
-
-struct TabItem {
-    let icon: String
-    let title: String
-    let tag: Int
-}
-
-extension TabItem {
-    static let allTabs: [TabItem] = [
-        TabItem(icon: "house.fill", title: "Home", tag: 0),
-        TabItem(icon: "book.fill", title: "Diary", tag: 1),
-        TabItem(icon: "plus.circle.fill", title: "Add", tag: 2),
-        TabItem(icon: "chart.line.uptrend.xyaxis", title: "Trends", tag: 3),
-        TabItem(icon: "gearshape.fill", title: "Settings", tag: 4)
-    ]
 }
 
 #Preview {
@@ -564,6 +471,6 @@ extension TabItem {
     sampleMeal2.user = sampleUser
     container.mainContext.insert(sampleMeal2)
     
-    return NewNutritionTrackerView(user: sampleUser, onLogout: { print("Preview logout action") })
+    return HomeView(user: sampleUser, onLogout: { print("Preview logout action") })
         .modelContainer(container)
 }
