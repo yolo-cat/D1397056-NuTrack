@@ -1,4 +1,3 @@
-
 import Foundation
 
 /// A structure that processes raw data models into a format ready for display in a view.
@@ -43,9 +42,9 @@ struct NutritionSummaryViewModel {
         self.fat = .init(current: totalFat, goal: user.dailyFatGoal, unit: "g")
 
         self.macronutrientCaloriesDistribution = .init(
-            carbs: totalCarbs * 4,
-            protein: totalProtein * 4,
-            fat: totalFat * 9
+            carbs: totalCarbs * NutritionCalculatorService.carbsCaloriesPerGram,
+            protein: totalProtein * NutritionCalculatorService.proteinCaloriesPerGram,
+            fat: totalFat * NutritionCalculatorService.fatCaloriesPerGram
         )
     }
 
