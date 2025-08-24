@@ -410,31 +410,38 @@ struct LogRow: View {
                     .foregroundColor(.accentColor)
             }
             
+            // 左側：餐點名稱、時間、熱量 VStack
             VStack(alignment: .leading, spacing: 4) {
                 Text((entry.name ?? "").isEmpty ? timeText : (entry.name ?? ""))
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .lineLimit(2)
+                    .lineLimit(1)
                     .foregroundColor(.primary)
+                    .truncationMode(.tail)
                 
-                HStack {
-                    Text("\(timeText) • \(entry.calories) 卡路里")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                Text(timeText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                
+                Text("\(entry.calories) 大卡")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
             
             Spacer()
             
-            // 僅在任一營養素 > 0 時顯示膠囊
+            // 右側：膠囊群組
             if hasAnyMacro {
                 HStack(spacing: 8) {
                     if entry.carbs > 0 { macroPill(value: entry.carbs, color: .carbsColor) }
                     if entry.protein > 0 { macroPill(value: entry.protein, color: .proteinColor) }
                     if entry.fat > 0 { macroPill(value: entry.fat, color: .fatColor) }
                 }
-                .padding(.leading, 8) // 與中間文字保持間距
-                .layoutPriority(1)    // 優先保留膠囊完整顯示
+                .layoutPriority(1)
             }
         }
         .padding(.vertical, 12)
