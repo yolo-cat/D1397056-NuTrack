@@ -323,6 +323,7 @@ struct ProgBar: View {
 struct TodayLog: View {
     let foodEntries: [MealEntry]
     @State private var animatedItems: Set<UUID> = []
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         VStack(spacing: 16) {
@@ -350,6 +351,20 @@ struct TodayLog: View {
                         .onAppear {
                             animatedItems.insert(entry.id)
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                delete(entry)
+                            } label: {
+                                Label("刪除", systemImage: "trash")
+                            }
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                delete(entry)
+                            } label: {
+                                Label("刪除", systemImage: "trash")
+                            }
+                        }
                 }
             }
         }
@@ -365,6 +380,12 @@ struct TodayLog: View {
         formatter.dateFormat = "yyyy年MM月dd日"
         formatter.locale = Locale(identifier: "zh_TW")
         return formatter.string(from: Date())
+    }
+    
+    private func delete(_ entry: MealEntry) {
+        withAnimation {
+            modelContext.delete(entry)
+        }
     }
 }
 
