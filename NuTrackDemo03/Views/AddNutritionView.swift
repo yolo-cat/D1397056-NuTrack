@@ -23,7 +23,6 @@ struct AddNutritionView: View {
     @State private var carbsInput: String = ""
     @State private var proteinInput: String = ""
     @State private var fatInput: String = ""
-    @State private var showSuccessAnimation = false
     // 替換為 iOS 17 建議的 dismiss API
     @Environment(\.dismiss) private var dismiss
     // 新增：管理鍵盤焦點
@@ -55,11 +54,6 @@ struct AddNutritionView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
-                }
-                
-                // Success animation overlay
-                if showSuccessAnimation {
-                    successAnimationOverlay
                 }
             }
             .onTapGesture {
@@ -231,37 +225,6 @@ struct AddNutritionView: View {
         }
     }
     
-    private var successAnimationOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    withAnimation {
-                        showSuccessAnimation = false
-                    }
-                }
-            
-            VStack(spacing: 20) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(.green)
-                    .scaleEffect(showSuccessAnimation ? 1.0 : 0.1)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.6), value: showSuccessAnimation)
-                
-                Text("營養記錄成功！")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .opacity(showSuccessAnimation ? 1.0 : 0)
-                    .animation(.easeInOut(duration: 0.3).delay(0.2), value: showSuccessAnimation)
-            }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 30)
-            .background(.white)
-            .cornerRadius(20)
-            .shadow(radius: 20)
-        }
-    }
-    
     // MARK: - Computed Properties
     
     private var carbsGrams: Int {
@@ -312,18 +275,8 @@ struct AddNutritionView: View {
         
         onNutritionAdded(nutritionInfo)
         
-        // Show success animation
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-            showSuccessAnimation = true
-        }
-        
-        // Dismiss after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation {
-                showSuccessAnimation = false
-            }
-            dismiss()
-        }
+        // 直接關閉視圖，停用成功動畫
+        dismiss()
     }
 }
 
