@@ -69,6 +69,7 @@ final class DataSeedingService {
             
             let mealEntry = MealEntry(
                 id: mockMeal.id,
+                name: "餐點記錄", // Default name for seeded data
                 timestamp: Date(timeIntervalSince1970: TimeInterval(mockMeal.timestamp) / 1000),
                 carbs: mockMeal.nutrition.carbs,
                 protein: mockMeal.nutrition.protein,

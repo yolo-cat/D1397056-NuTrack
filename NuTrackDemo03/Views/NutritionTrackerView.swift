@@ -104,6 +104,7 @@ struct NewNutritionTrackerView: View {
     private func addNutritionEntry(_ nutritionInfo: NutritionInfo) {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
             let newEntry = MealEntry(
+                name: nutritionInfo.name,
                 carbs: nutritionInfo.carbs,
                 protein: nutritionInfo.protein,
                 fat: nutritionInfo.fat
@@ -125,11 +126,11 @@ struct NewNutritionTrackerView: View {
     container.mainContext.insert(sampleUser)
     
     // Create some sample meal entries for the preview
-    let sampleMeal1 = MealEntry(carbs: 50, protein: 25, fat: 10)
+    let sampleMeal1 = MealEntry(name: "早餐", carbs: 50, protein: 25, fat: 10)
     sampleMeal1.user = sampleUser
     container.mainContext.insert(sampleMeal1)
     
-    let sampleMeal2 = MealEntry(carbs: 30, protein: 15, fat: 5)
+    let sampleMeal2 = MealEntry(name: "午餐", carbs: 30, protein: 15, fat: 5)
     sampleMeal2.user = sampleUser
     container.mainContext.insert(sampleMeal2)
     
