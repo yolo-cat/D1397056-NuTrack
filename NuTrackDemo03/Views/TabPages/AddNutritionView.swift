@@ -7,7 +7,15 @@
 
 import SwiftUI
 
-// 供父子 View 共享的輸入焦點種類
+// Local struct for encapsulating user input, decoupled from core MealEntry model
+struct NutritionInfo {
+    var name: String
+    var carbs: Int
+    var protein: Int
+    var fat: Int
+}
+
+// Supply a struct to hold user input from the form
 enum InputFieldFocus: Hashable { case name, carbs, protein, fat }
 
 struct AddNutritionView: View {
