@@ -7,12 +7,18 @@
 
 import SwiftUI
 
+// 供父子 View 共享的輸入焦點種類
+enum InputFieldFocus: Hashable { case name, carbs, protein, fat }
+
 struct AddNutritionView: View {
+    @State private var nameInput: String = ""
     @State private var carbsInput: String = ""
     @State private var proteinInput: String = ""
     @State private var fatInput: String = ""
     @State private var showSuccessAnimation = false
     @Environment(\.presentationMode) var presentationMode
+    // 新增：管理鍵盤焦點
+    @FocusState private var focusedField: InputFieldFocus?
     
     let onNutritionAdded: (NutritionInfo) -> Void
     
@@ -26,6 +32,9 @@ struct AddNutritionView: View {
                     VStack(spacing: 24) {
                         // Header
                         headerSection
+                        
+                        // Meal name input
+                        mealNameSection
                         
                         // Nutrition input fields
                         nutritionInputSection
@@ -44,6 +53,9 @@ struct AddNutritionView: View {
                     successAnimationOverlay
                 }
             }
+            .onTapGesture {
+                focusedField = nil
+            }
             .navigationTitle("記錄營養")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -61,6 +73,21 @@ struct AddNutritionView: View {
                     .disabled(!isInputValid)
                     .foregroundColor(isInputValid ? .primaryBlue : .gray)
                     .fontWeight(.medium)
+                }
+                
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        if focusedField == .fat {
+                            Button("完成") {
+                                focusedField = nil
+                            }
+                        } else {
+                            Button("下一個") {
+                                focusNextField()
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -87,27 +114,56 @@ struct AddNutritionView: View {
         .padding(.vertical, 20)
     }
     
+    private var mealNameSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("餐點名稱 (選填)")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.primary)
+            
+            TextField("例如：雞胸肉沙拉", text: $nameInput)
+                .font(.body)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.white)
+                .cornerRadius(8)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                .focused($focusedField, equals: .name)
+                .submitLabel(.next)
+                .onSubmit {
+                    focusNextField()
+                }
+        }
+        .padding(.horizontal, 20)
+    }
+    
     private var nutritionInputSection: some View {
         VStack(spacing: 16) {
             NutrientInputField(
                 title: "碳水化合物",
                 color: .carbsColor,
                 value: $carbsInput,
-                unit: "g"
+                unit: "g",
+                focus: $focusedField,
+                field: .carbs
             )
             
             NutrientInputField(
                 title: "蛋白質",
                 color: .proteinColor,
                 value: $proteinInput,
-                unit: "g"
+                unit: "g",
+                focus: $focusedField,
+                field: .protein
             )
             
             NutrientInputField(
                 title: "脂肪",
                 color: .fatColor,
                 value: $fatInput,
-                unit: "g"
+                unit: "g",
+                focus: $focusedField,
+                field: .fat
             )
         }
         .padding(.horizontal, 20)
@@ -133,11 +189,11 @@ struct AddNutritionView: View {
             }
             
             // Calorie breakdown
-            VStack(spacing: 8) {
-                calorieBreakdownRow(title: "碳水化合物", grams: carbsGrams, caloriesPerGram: 4, color: .carbsColor)
-                calorieBreakdownRow(title: "蛋白質", grams: proteinGrams, caloriesPerGram: 4, color: .proteinColor)
-                calorieBreakdownRow(title: "脂肪", grams: fatGrams, caloriesPerGram: 9, color: .fatColor)
-            }
+//            VStack(spacing: 8) {
+//                calorieBreakdownRow(title: "碳水化合物", grams: carbsGrams, caloriesPerGram: 4, color: .carbsColor)
+//                calorieBreakdownRow(title: "蛋白質", grams: proteinGrams, caloriesPerGram: 4, color: .proteinColor)
+//                calorieBreakdownRow(title: "脂肪", grams: fatGrams, caloriesPerGram: 9, color: .fatColor)
+//            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -221,13 +277,28 @@ struct AddNutritionView: View {
     
     // MARK: - Actions
     
+    private func focusNextField() {
+        switch focusedField {
+        case .name:
+            focusedField = .carbs
+        case .carbs:
+            focusedField = .protein
+        case .protein:
+            focusedField = .fat
+        case .fat, .none:
+            // It's the last field or no field is focused, dismiss the keyboard
+            focusedField = nil
+        }
+    }
+    
     private func addNutrition() {
         guard isInputValid else { return }
         
         let nutritionInfo = NutritionInfo(
-            carbsGrams: carbsGrams,
-            proteinGrams: proteinGrams,
-            fatGrams: fatGrams
+            name: nameInput,
+            carbs: carbsGrams,
+            protein: proteinGrams,
+            fat: fatGrams
         )
         
         onNutritionAdded(nutritionInfo)
@@ -254,6 +325,9 @@ struct NutrientInputField: View {
     let color: Color
     @Binding var value: String
     let unit: String
+    // 新增：父層傳入的焦點綁定與此欄位識別
+    let focus: FocusState<InputFieldFocus?>.Binding
+    let field: InputFieldFocus
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -272,6 +346,7 @@ struct NutrientInputField: View {
             
             TextField("0", text: $value)
                 .keyboardType(.numberPad)
+                .submitLabel(field == .fat ? .done : .next)
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(color)
@@ -283,6 +358,12 @@ struct NutrientInputField: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(color.opacity(0.3), lineWidth: 1)
                 )
+                .focused(focus, equals: field)
+                .onChange(of: value) { _, newValue in
+                    // 僅允許數字字元，移除非數字輸入（含貼上內容）
+                    let filtered = newValue.filter { $0.isNumber }
+                    if filtered != newValue { value = filtered }
+                }
         }
     }
 }

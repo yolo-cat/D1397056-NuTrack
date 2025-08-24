@@ -6,39 +6,79 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct NuTrackDemo03App: App {
-    @StateObject private var userManager = SimpleUserManager()
+    @State private var currentUser: UserProfile?
+    
+    private let modelContainer: ModelContainer
+
+    init() {
+        do {
+            modelContainer = try ModelContainer(for: UserProfile.self, MealEntry.self)
+            let modelContainer = self.modelContainer
+            Task { @MainActor in
+                DataSeedingService.seedDatabase(modelContext: modelContainer.mainContext)
+            }
+        } catch {
+            fatalError("無法建立 ModelContainer: \(error)")
+        }
+    }
     
     var body: some Scene {
         WindowGroup {
             Group {
-                if userManager.isLoggedIn {
-                    // 主應用程式介面
-                    MainAppView(userManager: userManager)
+                if let user = currentUser {
+                    MainAppView(user: user, onLogout: {
+                        withAnimation {
+                            currentUser = nil
+                        }
+                    })
                 } else {
-                    // 登入頁面
-                    SimpleLoginView(userManager: userManager)
+                    SimpleLoginView(onLoginSuccess: { userID in
+                        let modelContext = modelContainer.mainContext
+                        let user = try? modelContext.fetch(FetchDescriptor<UserProfile>(predicate: #Predicate<UserProfile> { $0.id == userID })).first
+                        withAnimation {
+                            currentUser = user
+                        }
+                    })
                 }
             }
-            .animation(.easeInOut(duration: 0.3), value: userManager.isLoggedIn)
+            .animation(.easeInOut(duration: 0.4), value: currentUser?.id)
         }
+        .modelContainer(modelContainer)
     }
 }
 
 /// 主應用程式介面包裝器
 struct MainAppView: View {
-    @ObservedObject var userManager: SimpleUserManager
+    let user: UserProfile
+    let onLogout: () -> Void
     
     var body: some View {
-        NewNutritionTrackerView(userManager: userManager)
-            .onShake {
-                // 開發用：搖動裝置可以登出
-                #if DEBUG
-                userManager.logout()
-                #endif
+        Group {
+            if isFirstTimeUser {
+                UserProfileSetupView(user: user) {
+                    // 設置完成後會自動重新評估 isFirstTimeUser
+                    // 因為 user.weightInKg 將不再是 nil
+                }
+            } else {
+                // NewNutritionTrackerView 也需要被重構以接收 UserProfile
+                NewNutritionTrackerView(user: user)
             }
+        }
+        .onShake {
+            // 開發用：搖動裝置可以登出
+            #if DEBUG
+            onLogout()
+            #endif
+        }
+    }
+    
+    /// 判斷是否為首次使用者（基於是否設置了體重）
+    private var isFirstTimeUser: Bool {
+        return user.weightInKg == nil
     }
 }
 

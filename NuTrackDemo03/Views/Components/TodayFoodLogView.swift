@@ -1,3 +1,5 @@
+import SwiftUI
+
 //
 //  TodayFoodLogView.swift
 //  SwiftUIDemo
@@ -5,10 +7,8 @@
 //  Created by NuTrack on 2024/7/31.
 //
 
-import SwiftUI
-
 struct TodayFoodLogView: View {
-    let foodEntries: [FoodLogEntry]
+    let foodEntries: [MealEntry]
     @State private var animatedItems: Set<UUID> = []
     
     var body: some View {
@@ -57,44 +57,31 @@ struct TodayFoodLogView: View {
 }
 
 struct FoodEntryRowView: View {
-    let entry: FoodLogEntry
+    let entry: MealEntry
     
     var body: some View {
         HStack(spacing: 12) {
             // Time circle with meal type icon or nutrition icon
             ZStack {
                 Circle()
-                    .fill(entryColor.opacity(0.15))
+                    .fill(Color.accentColor.opacity(0.15))
                     .frame(width: 50, height: 50)
                 
-                VStack(spacing: 2) {
-                    Image(systemName: entryIcon)
-                        .font(.caption)
-                        .foregroundColor(entryColor)
-                    
-                    Text(entry.time)
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundColor(entryColor)
-                }
+                Image(systemName: icon(for: entry.timestamp))
+                    .font(.caption)
+                    .foregroundColor(.accentColor)
             }
             
             // Food description
             VStack(alignment: .leading, spacing: 4) {
-                Text(entry.description)
+                Text(timeText)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(2)
                     .foregroundColor(.primary)
                 
                 HStack {
-                    Text("\(entry.totalCalories) 卡路里")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Text("佔 \(entry.caloriePercentage)%")
+                    Text("\(entry.calories) 卡路里")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -103,13 +90,13 @@ struct FoodEntryRowView: View {
             Spacer()
             
             // Percentage badge
-            Text("\(entry.caloriePercentage)%")
+            Text("\(entry.carbs)g")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(entryColor)
+                .background(Color.accentColor)
                 .cornerRadius(12)
         }
         .padding(.vertical, 12)
@@ -119,47 +106,32 @@ struct FoodEntryRowView: View {
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
     
-    private var entryColor: Color {
-        if let type = entry.type {
-            switch type {
-            case .breakfast: return .accentOrange
-            case .lunch: return .primaryBlue
-            case .dinner: return .fatColor
-            }
-        } else {
-            // 直接營養記錄使用綠色
-            return .green
-        }
+    private var timeText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: entry.timestamp)
     }
     
-    private var entryIcon: String {
-        if let type = entry.type {
-            return type.icon
-        } else {
-            // 直接營養記錄使用營養圖標
-            return "leaf.fill"
+    private func icon(for date: Date) -> String {
+        let hour = Calendar.current.component(.hour, from: date)
+        switch hour {
+        case 0..<6:  return "moon.zzz.fill"
+        case 6..<11: return "sunrise.fill"
+        case 11..<16: return "sun.max.fill"
+        case 16..<22: return "sunset.fill"
+        default:     return "moon.fill"
         }
-    }
-}
-
-// MARK: - Animation Helper Extension
-
-extension View {
-    func animateOnAppear(delay: Double = 0) -> some View {
-        self.scaleEffect(0.8)
-            .opacity(0)
-            .onAppear {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0).delay(delay)) {
-                    // Animation will be handled by the parent view
-                }
-            }
     }
 }
 
 #Preview {
     ScrollView {
         VStack {
-            TodayFoodLogView(foodEntries: FoodLogEntry.todayEntries)
+            TodayFoodLogView(foodEntries: [
+                MealEntry(timestamp: Date().addingTimeInterval(-3600), carbs: 50, protein: 20, fat: 10),
+                MealEntry(timestamp: Date(), carbs: 70, protein: 30, fat: 15),
+                MealEntry(timestamp: Date().addingTimeInterval(3600), carbs: 30, protein: 10, fat: 5)
+            ])
                 .padding()
             
             Spacer(minLength: 100)

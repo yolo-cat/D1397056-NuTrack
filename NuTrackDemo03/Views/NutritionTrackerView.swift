@@ -1,138 +1,138 @@
 //
-//  NutritionTrackerView.swift
-//  SwiftUIDemo
+//  NewNutritionTrackerView.swift
+//  NuTrackDemo03
 //
 //  Created by NuTrack on 2024/7/31.
 //
 
 import SwiftUI
+import SwiftData
 
 struct NewNutritionTrackerView: View {
-    @ObservedObject var userManager: SimpleUserManager
-    @State private var nutritionData = NutritionData.sample
-    @State private var foodEntries = FoodLogEntry.todayEntries
+    let user: UserProfile
+    
+    @Environment(\.modelContext) private var modelContext
+    
     @State private var showAddNutrition = false
+    
+    private var mealEntries: [MealEntry] {
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: .now)
+        let endOfToday = calendar.date(byAdding: .day, value: 1, to: startOfToday)!
+        let userID = user.id
+        let descriptor = FetchDescriptor<MealEntry>(
+            predicate: #Predicate<MealEntry> {
+                $0.user?.id == userID && $0.timestamp >= startOfToday && $0.timestamp < endOfToday
+            },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        return (try? modelContext.fetch(descriptor)) ?? []
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var nutritionData: NutritionData {
+        let totalCarbs = mealEntries.reduce(0) { $0 + $1.carbs }
+        let totalProtein = mealEntries.reduce(0) { $0 + $1.protein }
+        let totalFat = mealEntries.reduce(0) { $0 + $1.fat }
+
+        let carbCalories = totalCarbs * 4
+        let proteinCalories = totalProtein * 4
+        let fatCalories = totalFat * 9
+
+        return NutritionData(
+            carbs: .init(current: totalCarbs, goal: user.dailyCarbsGoal, unit: "g"),
+            protein: .init(current: totalProtein, goal: user.dailyProteinGoal, unit: "g"),
+            fat: .init(current: totalFat, goal: user.dailyFatGoal, unit: "g"),
+            macronutrientCaloriesDistribution: .init(carbs: carbCalories, protein: proteinCalories, fat: fatCalories)
+        )
+    }
+    
+    private var foodLogEntries: [MealEntry] {
+        return mealEntries
+    }
+    
+    // MARK: - Main Body
     
     var body: some View {
         NavigationView {
-            ZStack {
+            ZStack(alignment: .bottom) {
                 mainNutritionView
-                
-                // Bottom floating add button
-                VStack {
-                    Spacer()
-                    
-                    HStack {
-                        Spacer()
-                        
-                        Button(action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                showAddNutrition = true
-                            }
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.primaryBlue)
-                                    .frame(width: 60, height: 60)
-                                    .shadow(color: Color.primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
-                                
-                                Image(systemName: "plus")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(.bottom, 10)
-                }
+                addMealButton
             }
+            .navigationBarHidden(true)
         }
         .sheet(isPresented: $showAddNutrition) {
             AddNutritionView { nutritionInfo in
                 addNutritionEntry(nutritionInfo)
             }
         }
-        .onAppear {
-            updateNutritionData()
-        }
     }
     
-    // MARK: - Main Nutrition Tracking View
+    // MARK: - View Components
     
     private var mainNutritionView: some View {
         ZStack {
-            Color.backgroundGray.opacity(0.3)
-                .ignoresSafeArea()
-            
+            Color.backgroundGray.opacity(0.3).ignoresSafeArea()
             VStack(spacing: 0) {
-                // Header with navigation, title, and user avatar
-                HeaderView(username: userManager.currentUsername, userManager: userManager)
-                
-                // Main scrollable content
+                HeaderView(user: user)
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Nutrition progress bars (carbs, protein, fat)
                         NutritionProgressSection(nutritionData: nutritionData)
-                        
-                        // Today's food entries
-                        TodayFoodLogView(foodEntries: foodEntries)
+                        TodayFoodLogView(foodEntries: foodLogEntries)
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 80) // Add padding for floating button
                 }
             }
         }
-        .navigationBarHidden(true)
+    }
+    
+    private var addMealButton: some View {
+        Button(action: { showAddNutrition = true }) {
+            ZStack {
+                Circle().fill(Color.primaryBlue).frame(width: 60, height: 60)
+                    .shadow(color: .primaryBlue.opacity(0.3), radius: 10, x: 0, y: 5)
+                Image(systemName: "plus").font(.title2).fontWeight(.bold).foregroundColor(.white)
+            }
+        }
+        .padding(.bottom, 10)
     }
     
     // MARK: - Helper Functions
     
     private func addNutritionEntry(_ nutritionInfo: NutritionInfo) {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            let currentTime = timeFormatter.string(from: Date())
-            let simplifiedEntry = FoodLogEntry(
-                time: currentTime,
-                nutrition: nutritionInfo
+            let newEntry = MealEntry(
+                carbs: nutritionInfo.carbs,
+                protein: nutritionInfo.protein,
+                fat: nutritionInfo.fat
             )
-            foodEntries.append(simplifiedEntry)
-            updateNutritionData()
+            newEntry.user = user
+            modelContext.insert(newEntry)
         }
-    }
-    
-    private func updateNutritionData() {
-        let totalCalories = foodEntries.reduce(0) { $0 + $1.totalCalories }
-        let totalCarbs = foodEntries.reduce(0) { sum, entry in
-            sum + entry.totalCarbs
-        }
-        let totalProtein = foodEntries.reduce(0) { sum, entry in
-            sum + entry.totalProtein
-        }
-        let totalFat = foodEntries.reduce(0) { sum, entry in
-            sum + entry.totalFat
-        }
-        
-        // 使用動態營養目標而非靜態目標
-        let goal = userManager.getCurrentNutritionGoals()
-        
-        nutritionData = NutritionData(
-            caloriesConsumed: totalCalories,
-            caloriesBurned: nutritionData.caloriesBurned,
-            caloriesGoal: goal.calories,
-            carbs: NutrientData(current: totalCarbs, goal: goal.carbs, unit: "g"),
-            protein: NutrientData(current: totalProtein, goal: goal.protein, unit: "g"),
-            fat: NutrientData(current: totalFat, goal: goal.fat, unit: "g")
-        )
-    }
-    
-    private var timeFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter
     }
 }
 
+
+
+
 #Preview {
-    NewNutritionTrackerView(userManager: SimpleUserManager())
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: UserProfile.self, MealEntry.self, configurations: config)
+    
+    let sampleUser = UserProfile(name: "預覽用戶", weightInKg: 72.5)
+    container.mainContext.insert(sampleUser)
+    
+    // Create some sample meal entries for the preview
+    let sampleMeal1 = MealEntry(carbs: 50, protein: 25, fat: 10)
+    sampleMeal1.user = sampleUser
+    container.mainContext.insert(sampleMeal1)
+    
+    let sampleMeal2 = MealEntry(carbs: 30, protein: 15, fat: 5)
+    sampleMeal2.user = sampleUser
+    container.mainContext.insert(sampleMeal2)
+    
+    return NewNutritionTrackerView(user: sampleUser)
+        .modelContainer(container)
 }

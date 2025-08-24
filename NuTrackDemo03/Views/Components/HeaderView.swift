@@ -6,26 +6,22 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct HeaderView: View {
-    let username: String
-    let userManager: SimpleUserManager
+    let user: UserProfile
     
     var body: some View {
         HStack {
-            // Notification icon (left)
-            Button(action: {
-                // Handle notification action
-            }) {
-                Image(systemName: "bell.fill")
-                    .font(.title2)
-                    .foregroundColor(.primaryBlue)
-            }
-            .accessibilityLabel("通知")
+//            Button(action: { /* 通知功能待實現 */ }) {
+//                Image(systemName: "bell.fill")
+//                    .font(.title2)
+//                    .foregroundColor(.primaryBlue)
+//            }
+//            .accessibilityLabel("通知")
             
-            Spacer()
+//            Spacer()
             
-            // App title (center)
             Text("NuTrack")
                 .font(.title2)
                 .fontWeight(.bold)
@@ -33,8 +29,7 @@ struct HeaderView: View {
             
             Spacer()
             
-            // User avatar with username (right) - NavigationLink to UserProfileView
-            NavigationLink(destination: UserProfileView(userManager: userManager)) {
+            NavigationLink(destination: UserProfileView(user: user)) {
                 HStack(spacing: 8) {
                     Circle()
                         .fill(Color.primaryBlue)
@@ -45,16 +40,14 @@ struct HeaderView: View {
                                 .foregroundColor(.white)
                         )
                     
-                    if !username.isEmpty {
-                        Text(username)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.primaryBlue)
-                            .lineLimit(1)
-                    }
+                    Text(user.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primaryBlue)
+                        .lineLimit(1)
                 }
             }
-            .accessibilityLabel("用戶資料: \(username)")
+            .accessibilityLabel("用戶資料: \(user.name)")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -64,5 +57,10 @@ struct HeaderView: View {
 }
 
 #Preview {
-    HeaderView(username: "", userManager: SimpleUserManager())
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: UserProfile.self, configurations: config)
+    let sampleUser = UserProfile(name: "預覽用戶")
+    
+    return HeaderView(user: sampleUser)
+        .modelContainer(container)
 }

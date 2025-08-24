@@ -53,6 +53,82 @@ struct NuTrackDemo03Tests {
         userManager2.logout()
     }
     
+    // MARK: - Time-Based Categorization Tests
+    
+    @Test func testTimeBasedMealCategorization() async throws {
+        // Test early morning
+        let lateNightCategory = TimeBasedMealCategory.category(from: "02:30")
+        #expect(lateNightCategory == .lateNight)
+        
+        // Test breakfast time
+        let breakfastCategory = TimeBasedMealCategory.category(from: "07:30")
+        #expect(breakfastCategory == .breakfast)
+        
+        // Test lunch time
+        let lunchCategory = TimeBasedMealCategory.category(from: "12:30")
+        #expect(lunchCategory == .lunch)
+        
+        // Test dinner time
+        let dinnerCategory = TimeBasedMealCategory.category(from: "18:30")
+        #expect(dinnerCategory == .dinner)
+        
+        // Test midnight snack time
+        let midnightCategory = TimeBasedMealCategory.category(from: "23:30")
+        #expect(midnightCategory == .midnightSnack)
+    }
+    
+    @Test func testTimeBasedMealCategorizationEdgeCases() async throws {
+        // Test edge cases
+        #expect(TimeBasedMealCategory.category(from: "04:59") == .lateNight)
+        #expect(TimeBasedMealCategory.category(from: "05:00") == .breakfast)
+        #expect(TimeBasedMealCategory.category(from: "10:59") == .breakfast)
+        #expect(TimeBasedMealCategory.category(from: "11:00") == .lunch)
+        #expect(TimeBasedMealCategory.category(from: "15:59") == .lunch)
+        #expect(TimeBasedMealCategory.category(from: "16:00") == .dinner)
+        #expect(TimeBasedMealCategory.category(from: "22:59") == .dinner)
+        #expect(TimeBasedMealCategory.category(from: "23:00") == .midnightSnack)
+        
+        // Test invalid input (should default to breakfast)
+        #expect(TimeBasedMealCategory.category(from: "invalid") == .breakfast)
+        #expect(TimeBasedMealCategory.category(from: "25:00") == .breakfast)
+    }
+    
+    @Test func testMealItemTimeBasedCategory() async throws {
+        // Test that MealItem correctly uses time-based categorization
+        let breakfastMeal = MealItem(
+            name: "煎蛋",
+            time: "07:30",
+            nutrition: NutritionInfo(calories: 155, carbs: 1, protein: 13, fat: 11)
+        )
+        
+        #expect(breakfastMeal.timeBasedCategory == .breakfast)
+        
+        let lunchMeal = MealItem(
+            name: "午餐",
+            time: "12:30",
+            nutrition: NutritionInfo(calories: 300, carbs: 20, protein: 25, fat: 10)
+        )
+        
+        #expect(lunchMeal.timeBasedCategory == .lunch)
+    }
+    
+    @Test func testFoodLogEntryTimeBasedCategory() async throws {
+        // Test that FoodLogEntry correctly uses time-based categorization
+        let breakfastEntry = FoodLogEntry(
+            time: "07:30",
+            nutrition: NutritionInfo(calories: 200, carbs: 20, protein: 15, fat: 8)
+        )
+        
+        #expect(breakfastEntry.timeBasedCategory == .breakfast)
+        
+        let dinnerEntry = FoodLogEntry(
+            time: "19:00",
+            nutrition: NutritionInfo(calories: 400, carbs: 30, protein: 25, fat: 20)
+        )
+        
+        #expect(dinnerEntry.timeBasedCategory == .dinner)
+    }
+
     // MARK: - CalorieRingView Tests
     
     @Test func testNutritionProgressCalculation() async throws {

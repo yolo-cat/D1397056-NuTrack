@@ -20,11 +20,7 @@ struct NutritionProgressSection: View {
                     .fontWeight(.semibold)
                 
                 Spacer()
-                
-                // Show calorie distribution percentages
-                Text("熱量分佈")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            
             }
             
             VStack(spacing: 16) {
@@ -33,7 +29,6 @@ struct NutritionProgressSection: View {
                     title: "碳水化合物",
                     nutrientData: nutritionData.carbs,
                     calorieInfo: nutritionData.macronutrientCaloriesDistribution.carbs,
-                    percentage: nutritionData.macronutrientPercentages.carbs,
                     color: .carbsColor,
                     showProgress: showProgress
                 )
@@ -45,7 +40,6 @@ struct NutritionProgressSection: View {
                     title: "蛋白質",
                     nutrientData: nutritionData.protein,
                     calorieInfo: nutritionData.macronutrientCaloriesDistribution.protein,
-                    percentage: nutritionData.macronutrientPercentages.protein,
                     color: .proteinColor,
                     showProgress: showProgress
                 )
@@ -57,7 +51,6 @@ struct NutritionProgressSection: View {
                     title: "脂肪",
                     nutrientData: nutritionData.fat,
                     calorieInfo: nutritionData.macronutrientCaloriesDistribution.fat,
-                    percentage: nutritionData.macronutrientPercentages.fat,
                     color: .fatColor,
                     showProgress: showProgress
                 )
@@ -77,9 +70,8 @@ struct NutritionProgressSection: View {
 
 struct NutritionProgressBar: View {
     let title: String
-    let nutrientData: NutrientData
+    let nutrientData: NutritionData.Nutrient
     let calorieInfo: Int
-    let percentage: Double
     let color: Color
     let showProgress: Bool
     
