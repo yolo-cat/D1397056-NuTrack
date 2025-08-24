@@ -11,6 +11,7 @@ import SwiftData
 @main
 struct NuTrackDemo03App: App {
     @State private var currentUser: UserProfile?
+    @State private var userPendingSetup: UserProfile?
     
     private let modelContainer: ModelContainer
 
@@ -29,14 +30,31 @@ struct NuTrackDemo03App: App {
                     MainAppView(user: user, onLogout: {
                         withAnimation {
                             currentUser = nil
+                            userPendingSetup = nil
+                        }
+                    })
+                } else if let setupUser = userPendingSetup {
+                    // 首次登入：使用整合後的 UserProfileView 並顯示歡迎文字
+                    UserProfileView(user: setupUser, isFirstLogin: true, onCompleteSetup: {
+                        withAnimation {
+                            currentUser = setupUser
+                            userPendingSetup = nil
                         }
                     })
                 } else {
                     SimpleLoginView(onLoginSuccess: { userID in
                         let modelContext = modelContainer.mainContext
-                        let user = try? modelContext.fetch(FetchDescriptor<UserProfile>(predicate: #Predicate<UserProfile> { $0.id == userID })).first
-                        withAnimation {
-                            currentUser = user
+                        let fetched = try? modelContext.fetch(FetchDescriptor<UserProfile>(predicate: #Predicate<UserProfile> { $0.id == userID }))
+                        if let user = fetched?.first {
+                            withAnimation {
+                                if user.weightInKg == nil {
+                                    userPendingSetup = user
+                                    currentUser = nil
+                                } else {
+                                    currentUser = user
+                                    userPendingSetup = nil
+                                }
+                            }
                         }
                     })
                 }
@@ -65,8 +83,16 @@ struct NuTrackDemo03App: App {
                 if l == r { return lhs.name < rhs.name }
                 return l > r
             }
-            withAnimation {
-                self.currentUser = sorted.first
+            if let recent = sorted.first {
+                withAnimation {
+                    if recent.weightInKg == nil {
+                        self.userPendingSetup = recent
+                        self.currentUser = nil
+                    } else {
+                        self.currentUser = recent
+                        self.userPendingSetup = nil
+                    }
+                }
             }
         } catch {
             print("啟動時載入最近使用者失敗: \(error)")
@@ -80,7 +106,7 @@ struct MainAppView: View {
     let onLogout: () -> Void
     
     var body: some View {
-        NewNutritionTrackerView(user: user)
+        NewNutritionTrackerView(user: user, onLogout: onLogout)
             .onShake {
                 // 開發用：搖動裝置可以登出
                 #if DEBUG

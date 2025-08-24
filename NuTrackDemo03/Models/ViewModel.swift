@@ -15,8 +15,10 @@ struct NutritionSummaryViewModel {
         var unit: String
         
         var progress: Double {
-            guard goal > 0 else { return 0 }
-            return Double(current) / Double(goal)
+            if goal <= 0 { return 0 } // If goal is 0 or negative, progress is 0.
+            let progressValue = Double(current) / Double(goal)
+            // If the calculation results in NaN (e.g., 0/0), return 0.
+            return progressValue.isNaN ? 0 : progressValue
         }
         
         var percentage: Int {

@@ -10,6 +10,7 @@ import SwiftData
 
 struct HeaderView: View {
     let user: UserProfile
+    let onLogout: () -> Void
     
     var body: some View {
         HStack {
@@ -29,7 +30,7 @@ struct HeaderView: View {
             
             Spacer()
             
-            NavigationLink(destination: UserProfileView(user: user)) {
+            NavigationLink(destination: UserProfileView(user: user, onLogout: onLogout)) {
                 HStack(spacing: 8) {
                     Circle()
                         .fill(Color.primaryBlue)
@@ -61,6 +62,6 @@ struct HeaderView: View {
     let container = try! ModelContainer(for: UserProfile.self, configurations: config)
     let sampleUser = UserProfile(name: "預覽用戶")
     
-    return HeaderView(user: sampleUser)
+    return HeaderView(user: sampleUser, onLogout: {})
         .modelContainer(container)
 }
