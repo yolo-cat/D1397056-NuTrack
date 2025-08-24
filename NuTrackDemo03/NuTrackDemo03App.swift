@@ -42,7 +42,7 @@ struct NuTrackDemo03App: App {
                         }
                     })
                 } else {
-                    SimpleLoginView(onLoginSuccess: { userID in
+                    LoginView(onLoginSuccess: { userID in
                         let modelContext = modelContainer.mainContext
                         let fetched = try? modelContext.fetch(FetchDescriptor<UserProfile>(predicate: #Predicate<UserProfile> { $0.id == userID }))
                         if let user = fetched?.first {

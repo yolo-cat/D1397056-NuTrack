@@ -1,5 +1,5 @@
 //
-//  SimpleLoginView.swift
+//  LoginView.swift
 //  NuTrackDemo03
 //
 //  Created by NuTrack on 2025/1/15.
@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 /// 簡潔的登入頁面，遵循 Apple SwiftUI 設計規範
-struct SimpleLoginView: View {
+struct LoginView: View {
     var onLoginSuccess: (UUID) -> Void
     @Environment(\.modelContext) private var modelContext
     
@@ -200,6 +200,6 @@ struct SimpleLoginView: View {
 }
 
 #Preview {
-    SimpleLoginView(onLoginSuccess: { _ in print("登入成功！") })
+    LoginView(onLoginSuccess: { _ in print("登入成功！") })
         .modelContainer(for: [UserProfile.self, MealEntry.self])
 }
