@@ -159,6 +159,16 @@ struct HeaderView: View {
     }
 }
 
+#Preview("HeaderView") {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: UserProfile.self, configurations: config)
+    let sampleUser = UserProfile(name: "預覽用戶", weightInKg: 70)
+    container.mainContext.insert(sampleUser)
+    return NavigationStack { HeaderView(user: sampleUser, onLogout: {}) }
+        .modelContainer(container)
+        .padding()
+}
+
 // MARK: - Components • Nutrition Progress (Section + Bar)
 struct NutritionProgressSection: View {
     let nutritionData: NutritionData
@@ -290,6 +300,25 @@ struct NutritionProgressBar: View {
     }
 }
 
+#Preview("NutritionProgressSection") {
+    NutritionProgressSection(nutritionData: .sample)
+        .padding()
+        .background(Color.white)
+}
+
+#Preview("NutritionProgressBar") {
+    let nutrient = NutritionData.Nutrient(current: 120, goal: 200, unit: "g")
+    return NutritionProgressBar(
+        title: "碳水化合物",
+        nutrientData: nutrient,
+        calorieInfo: 480,
+        color: .carbsColor,
+        showProgress: true
+    )
+    .padding()
+    .background(Color.white)
+}
+
 // MARK: - Components • Today Food Log (List + Row)
 struct TodayFoodLogView: View {
     let foodEntries: [MealEntry]
@@ -404,6 +433,28 @@ struct FoodEntryRowView: View {
     }
 }
 
+#Preview("TodayFoodLogView") {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: UserProfile.self, MealEntry.self, configurations: config)
+    let u = UserProfile(name: "預覽用戶")
+    container.mainContext.insert(u)
+    let items: [MealEntry] = [
+        MealEntry(name: "早餐", timestamp: Date().addingTimeInterval(-3600), carbs: 50, protein: 20, fat: 10),
+        MealEntry(name: "午餐", timestamp: Date(), carbs: 70, protein: 30, fat: 15),
+        MealEntry(name: "晚餐", timestamp: Date().addingTimeInterval(3600), carbs: 30, protein: 10, fat: 5)
+    ]
+    items.forEach { $0.user = u; container.mainContext.insert($0) }
+    return ScrollView { TodayFoodLogView(foodEntries: items).padding() }
+        .modelContainer(container)
+}
+
+#Preview("FoodEntryRowView") {
+    let entry = MealEntry(name: "優格+燕麥", timestamp: Date(), carbs: 35, protein: 15, fat: 8)
+    return FoodEntryRowView(entry: entry)
+        .padding()
+        .background(Color.white)
+}
+
 // MARK: - Components • Custom Tab (TabView + TabItem + Alternative Bar)
 struct CustomTabView: View {
     @Binding var selectedTab: Int
@@ -470,6 +521,17 @@ struct CustomTabView: View {
     }
 }
 
+private struct _CustomTabPreviewWrapper: View {
+    @State private var tab = 0
+    var body: some View {
+        CustomTabView(selectedTab: $tab, onAddMeal: {})
+    }
+}
+
+#Preview("CustomTabView") {
+    _CustomTabPreviewWrapper()
+}
+
 struct TabItem {
     let icon: String
     let title: String
@@ -484,59 +546,6 @@ extension TabItem {
         TabItem(icon: "chart.line.uptrend.xyaxis", title: "Trends", tag: 3),
         TabItem(icon: "gearshape.fill", title: "Settings", tag: 4)
     ]
-}
-
-struct AlternativeCustomTabBar: View {
-    @Binding var selectedTab: Int
-    let onAddMeal: () -> Void
-    
-    var body: some View {
-        HStack {
-            ForEach(TabItem.allTabs, id: \.tag) { tab in
-                if tab.tag == 2 {
-                    Button(action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            onAddMeal()
-                        }
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.primaryBlue)
-                                .frame(width: 56, height: 56)
-                                .shadow(color: Color.primaryBlue.opacity(0.3), radius: 8, x: 0, y: 4)
-                            Image(systemName: "plus")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .offset(y: -8)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
-                } else {
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            selectedTab = tab.tag
-                        }
-                    }) {
-                        VStack(spacing: 4) {
-                            Image(systemName: tab.icon)
-                                .font(.title3)
-                                .foregroundColor(selectedTab == tab.tag ? Color.primaryBlue : .gray)
-                            Text(tab.title)
-                                .font(.caption2)
-                                .foregroundColor(selectedTab == tab.tag ? Color.primaryBlue : .gray)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-    }
 }
 
 #Preview {
