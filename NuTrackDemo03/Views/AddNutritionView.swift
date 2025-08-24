@@ -24,14 +24,15 @@ struct AddNutritionView: View {
     @State private var proteinInput: String = ""
     @State private var fatInput: String = ""
     @State private var showSuccessAnimation = false
-    @Environment(\.presentationMode) var presentationMode
+    // 替換為 iOS 17 建議的 dismiss API
+    @Environment(\.dismiss) private var dismiss
     // 新增：管理鍵盤焦點
     @FocusState private var focusedField: InputFieldFocus?
     
     let onNutritionAdded: (NutritionInfo) -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 Color.backgroundGray.opacity(0.3)
                     .ignoresSafeArea()
@@ -69,7 +70,7 @@ struct AddNutritionView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("取消") {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }
                     .foregroundColor(.secondary)
                 }
@@ -321,7 +322,7 @@ struct AddNutritionView: View {
             withAnimation {
                 showSuccessAnimation = false
             }
-            presentationMode.wrappedValue.dismiss()
+            dismiss()
         }
     }
 }

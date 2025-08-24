@@ -10,7 +10,8 @@ import SwiftData
 
 struct UserProfileView: View {
     @Bindable var user: UserProfile
-    @Environment(\.presentationMode) var presentationMode
+    // 使用 iOS 17 的 dismiss API 取代舊的 presentationMode
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
     // 是否為首次登入導流到設定頁
@@ -126,7 +127,7 @@ struct UserProfileView: View {
         .onTapGesture {
             isWeightFieldFocused = false
         }
-        .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .alert("體重無效", isPresented: $showWeightValidationError) {
             Button("確定", role: .cancel) {}
         } message: {
@@ -138,7 +139,7 @@ struct UserProfileView: View {
         } message: {
             Text("此操作將永久刪除您的所有資料，包含餐點紀錄，且無法復原。")
         }
-        .onChange(of: isWeightFieldFocused) { _, isFocused in
+        .onChange(of: isWeightFieldFocused) { isFocused in
             if !isFocused {
                 // 1. Update the weight used for calculating recommendations
                 let newWeight = Double(weightInput) ?? 0
@@ -164,7 +165,7 @@ struct UserProfileView: View {
     
     private var headerView: some View {
         HStack {
-            Button(action: { presentationMode.wrappedValue.dismiss() }) {
+            Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
                     .font(.title2)
                     .foregroundColor(.primaryBlue)
@@ -213,7 +214,7 @@ struct UserProfileView: View {
 //                .scaledToFit()
 //                .frame(width: 80, height: 80)
 //                .foregroundColor(Color.primaryBlue.opacity(0.8))
-//            
+//
 //            Text(user.name)
 //                .font(.title)
 //                .fontWeight(.bold)
@@ -371,7 +372,7 @@ struct UserProfileView: View {
         if let onCompleteSetup {
             onCompleteSetup()
         } else {
-            presentationMode.wrappedValue.dismiss()
+            dismiss()
         }
     }
     
