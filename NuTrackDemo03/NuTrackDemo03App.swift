@@ -56,14 +56,12 @@ struct MainAppView: View {
     let user: UserProfile
     let onLogout: () -> Void
     
-    @State private var showProfileSetup = false
-    
     var body: some View {
         Group {
             if isFirstTimeUser {
                 UserProfileSetupView(user: user) {
-                    // 完成設置後，隱藏設置界面
-                    showProfileSetup = false
+                    // 設置完成後會自動重新評估 isFirstTimeUser
+                    // 因為 user.weightInKg 將不再是 nil
                 }
             } else {
                 // NewNutritionTrackerView 也需要被重構以接收 UserProfile
@@ -75,10 +73,6 @@ struct MainAppView: View {
             #if DEBUG
             onLogout()
             #endif
-        }
-        .onAppear {
-            // 檢查是否為首次使用者
-            showProfileSetup = isFirstTimeUser
         }
     }
     
