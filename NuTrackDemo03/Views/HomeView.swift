@@ -101,6 +101,8 @@ struct HomeView: View {
                 let mealToDelete = mealEntries[index]
                 modelContext.delete(mealToDelete)
             }
+            // 顯式保存刪除結果
+            try? modelContext.save()
         }
     }
     
@@ -114,6 +116,8 @@ struct HomeView: View {
             )
             newEntry.user = user
             modelContext.insert(newEntry)
+            // 顯式保存新增結果
+            try? modelContext.save()
         }
     }
 }
@@ -385,6 +389,8 @@ struct TodayLog: View {
     private func delete(_ entry: MealEntry) {
         withAnimation {
             modelContext.delete(entry)
+            // 顯式保存刪除結果
+            try? modelContext.save()
         }
     }
 }
