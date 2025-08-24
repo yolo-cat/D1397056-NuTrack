@@ -62,20 +62,16 @@ struct SimpleLoginView: View {
             }
             VStack(spacing: 8) {
                 Text("NuTrack").font(.largeTitle).fontWeight(.bold).foregroundColor(.primaryBlue)
-                Text("營養追蹤，健康生活").font(.subheadline).foregroundColor(.secondary)
+                Text("營養追蹤器").font(.subheadline).foregroundColor(.secondary)
             }
         }
     }
     
     private var loginFormSection: some View {
         VStack(spacing: 24) {
-            VStack(spacing: 8) {
-                Text("歡迎使用").font(.title2).fontWeight(.semibold).foregroundColor(.primary)
-                Text("請輸入您的使用者名稱開始使用").font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
-            }
             VStack(alignment: .leading, spacing: 8) {
                 Text("使用者名稱").font(.subheadline).fontWeight(.medium).foregroundColor(.primary)
-                TextField("請輸入您的名稱", text: $username)
+                TextField("請輸入名稱", text: $username)
                     .focused($isTextFieldFocused)
                     .font(.body)
                     .padding(12)
@@ -144,8 +140,14 @@ struct SimpleLoginView: View {
     
     private func loadExistingUsers() {
         do {
-            let descriptor = FetchDescriptor<UserProfile>(sortBy: [SortDescriptor(\.name, order: .forward)])
-            existingUsers = try modelContext.fetch(descriptor)
+            // 讀取所有使用者，並依最近登入時間由新到舊排序（nil 視為最舊）
+            let users = try modelContext.fetch(FetchDescriptor<UserProfile>())
+            existingUsers = users.sorted { (lhs, rhs) in
+                let l = lhs.lastLoginAt ?? .distantPast
+                let r = rhs.lastLoginAt ?? .distantPast
+                if l == r { return lhs.name < rhs.name }
+                return l > r
+            }
         } catch {
             print("讀取既有使用者失敗: \(error)")
             existingUsers = []
@@ -154,7 +156,7 @@ struct SimpleLoginView: View {
     
     @MainActor
     private func handleLogin() {
-        Task {
+        Task { @MainActor in
             let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmedUsername.isEmpty else { return }
             
@@ -169,10 +171,13 @@ struct SimpleLoginView: View {
             do {
                 if let existingUser = try modelContext.fetch(descriptor).first {
                     print("使用者 \(trimmedUsername) 已存在，直接登入。")
+                    existingUser.lastLoginAt = Date()
+                    try modelContext.save()
                     onLoginSuccess(existingUser.id)
                 } else {
                     print("使用者 \(trimmedUsername) 不存在，建立新使用者並登入。")
                     let newUser = UserProfile(name: trimmedUsername)
+                    newUser.lastLoginAt = Date()
                     modelContext.insert(newUser)
                     try modelContext.save()
                     onLoginSuccess(newUser.id)
@@ -188,6 +193,8 @@ struct SimpleLoginView: View {
     
     @MainActor
     private func handleQuickSelect(user: UserProfile) {
+        user.lastLoginAt = Date()
+        try? modelContext.save()
         onLoginSuccess(user.id)
     }
 }

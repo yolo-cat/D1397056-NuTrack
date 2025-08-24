@@ -22,6 +22,9 @@ final class UserProfile {
     var dailyProteinGoal: Int
     var dailyFatGoal: Int
 
+    /// 最近一次登入時間（用於啟動時自動登入最近使用者）
+    var lastLoginAt: Date?
+
     // 與 MealEntry 的反向關聯，刪除使用者時一併刪除其餐點
     @Relationship(deleteRule: .cascade, inverse: \MealEntry.user)
     var mealEntries: [MealEntry] = []
@@ -32,7 +35,8 @@ final class UserProfile {
          dailyCalorieGoal: Int = 2000,
          dailyCarbsGoal: Int = 250,
          dailyProteinGoal: Int = 125,
-         dailyFatGoal: Int = 56) {
+         dailyFatGoal: Int = 56,
+         lastLoginAt: Date? = nil) {
         self.id = id
         self.name = name
         self.weightInKg = weightInKg
@@ -40,5 +44,6 @@ final class UserProfile {
         self.dailyCarbsGoal = dailyCarbsGoal
         self.dailyProteinGoal = dailyProteinGoal
         self.dailyFatGoal = dailyFatGoal
+        self.lastLoginAt = lastLoginAt
     }
 }

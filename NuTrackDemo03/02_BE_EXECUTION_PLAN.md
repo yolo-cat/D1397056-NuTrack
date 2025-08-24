@@ -14,7 +14,7 @@
 2.  **設定 Model Container**:
     *   在 `NuTrackDemo03App.swift` 中，註冊 `UserProfile` 和 `MealEntry` 兩個模型。
 3.  **重構健康計算邏輯**:
-    *   建立新的 `/Services/HealthCalculatorService.swift` 檔案。
+    *   建立新的 `/Services/NutritionCalculatorService.swift` 檔案。
     *   將 `Extensions/WeightCalculations.swift` 中的所有計算方法，遷移到新的服務中。
     *   全域搜尋並替換舊方法的呼叫點。
     *   刪除舊的 `Extensions/WeightCalculations.swift` 檔案。

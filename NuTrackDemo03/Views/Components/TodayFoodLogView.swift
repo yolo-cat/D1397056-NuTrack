@@ -74,14 +74,14 @@ struct FoodEntryRowView: View {
             
             // Food description
             VStack(alignment: .leading, spacing: 4) {
-                Text(timeText)
+                Text((entry.name ?? "").isEmpty ? timeText : (entry.name ?? ""))
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(2)
                     .foregroundColor(.primary)
                 
                 HStack {
-                    Text("\(entry.calories) 卡路里")
+                    Text("\(timeText) • \(entry.calories) 卡路里")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -128,9 +128,9 @@ struct FoodEntryRowView: View {
     ScrollView {
         VStack {
             TodayFoodLogView(foodEntries: [
-                MealEntry(timestamp: Date().addingTimeInterval(-3600), carbs: 50, protein: 20, fat: 10),
-                MealEntry(timestamp: Date(), carbs: 70, protein: 30, fat: 15),
-                MealEntry(timestamp: Date().addingTimeInterval(3600), carbs: 30, protein: 10, fat: 5)
+                MealEntry(name: "早餐", timestamp: Date().addingTimeInterval(-3600), carbs: 50, protein: 20, fat: 10),
+                MealEntry(name: "午餐", timestamp: Date(), carbs: 70, protein: 30, fat: 15),
+                MealEntry(name: "晚餐", timestamp: Date().addingTimeInterval(3600), carbs: 30, protein: 10, fat: 5)
             ])
                 .padding()
             

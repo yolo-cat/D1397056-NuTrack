@@ -118,7 +118,7 @@ struct NuTrackDemo03App: App {
 
 ## 第二部分：重構核心服務 (個人化計算)
 
-此階段的目標是將現有的計算邏輯 (`Extensions/WeightCalculations.swift`)，徹底重構至一個全新的、權責單一的服務 `HealthCalculatorService` 中。
+此階段的目標是將現有的計算邏輯 (`Extensions/WeightCalculations.swift`)，徹底重構至一個全新的、權責單一的服務 `NutritionCalculatorService` 中。
 
 ### 2.1. 重構策略：一步到位 (Rip & Replace)
 
@@ -126,12 +126,12 @@ struct NuTrackDemo03App: App {
 
 ### 2.2. 執行步驟
 
-#### 步驟 1: 建立整合式的 `HealthCalculatorService`
+#### 步驟 1: 建立整合式的 `NutritionCalculatorService`
 
-建立新檔案 `/Services/HealthCalculatorService.swift`。此單一檔案將包含計算服務所需的一切，包括其回傳的資料結構 `RecommendationRange`，以提高功能的內聚性。
+建立新檔案 `/Services/NutritionCalculatorService.swift`。此單一檔案將包含計算服務所需的一切，包括其回傳的資料結構 `RecommendationRange`，以提高功能的內聚性。
 
 ```swift
-// /Services/HealthCalculatorService.swift
+// /Services/NutritionCalculatorService.swift
 
 import Foundation
 
@@ -142,7 +142,7 @@ struct RecommendationRange {
     let suggested: Int
 }
 
-struct HealthCalculatorService {
+struct NutritionCalculatorService {
 
     static func getProteinRecommendation(weightInKg: Double) -> RecommendationRange {
         let minGramsPerKg = 1.6
@@ -187,7 +187,7 @@ struct HealthCalculatorService {
 
 1.  使用 Xcode 的全域搜尋功能 (Cmd+Shift+F)。
 2.  搜尋所有在 `Extensions/WeightCalculations.swift` 中定義的舊方法名稱。
-3.  將每一個找到的呼叫點，手動修改為對 `HealthCalculatorService` 中對應新方法的呼叫。
+3.  將每一個找到的呼叫點，手動修改為對 `NutritionCalculatorService` 中對應新方法的呼叫。
 
 #### 步驟 3: 刪除舊有實作
 
@@ -202,5 +202,5 @@ struct HealthCalculatorService {
 
 1.  **登入後檢查**：檢查 `userProfile.weightInKg` 是否有值。
 2.  **引導設定**：若無，則引導使用者到設定頁面輸入體重。
-3.  **計算與呈現**：呼叫 `HealthCalculatorService` 取得建議範圍，並在 UI 上透過滑桿 (Slider) 等元件呈現給使用者。
+3.  **計算與呈現**：呼叫 `NutritionCalculatorService` 取得建議範圍，並在 UI 上透過滑桿 (Slider) 等元件呈現給使用者。
 4.  **儲存自訂目標**：使用者調整並確認後，將最終值儲存回 `userProfile` 的目標欄位中。
