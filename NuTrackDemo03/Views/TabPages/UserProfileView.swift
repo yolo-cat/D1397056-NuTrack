@@ -97,7 +97,7 @@ struct UserProfileView: View {
                     // 2. Componentized UI
                     headerView
                     if isFirstLogin { welcomeSection }
-//                    userAvatarSection
+//                    userAvata2urSection
                     weightInputSection
                     nutritionGoalsSection // Renamed from nutritionSlidersSection for clarity
                     totalCaloriesSection
@@ -169,12 +169,18 @@ struct UserProfileView: View {
                     .font(.title2)
                     .foregroundColor(.primaryBlue)
             }
+            .opacity(isFirstLogin ? 0 : 1)
+            .disabled(isFirstLogin)
+
             Spacer()
+            
             Text(isFirstLogin ? "設置基本資料" : "用戶設置")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primaryBlue)
+            
             Spacer()
+            
             Button(isFirstLogin ? "完成" : "保存", action: saveSettings)
                 .font(.headline)
                 .fontWeight(.medium)

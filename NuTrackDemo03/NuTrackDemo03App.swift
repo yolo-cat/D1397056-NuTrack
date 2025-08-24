@@ -35,12 +35,12 @@ struct NuTrackDemo03App: App {
                     })
                 } else if let setupUser = userPendingSetup {
                     // 首次登入：使用整合後的 UserProfileView 並顯示歡迎文字
-                    UserProfileView(user: setupUser, isFirstLogin: true) {
+                    UserProfileView(user: setupUser, isFirstLogin: true, onCompleteSetup: {
                         withAnimation {
                             currentUser = setupUser
                             userPendingSetup = nil
                         }
-                    }
+                    })
                 } else {
                     SimpleLoginView(onLoginSuccess: { userID in
                         let modelContext = modelContainer.mainContext
