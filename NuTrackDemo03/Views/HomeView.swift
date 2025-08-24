@@ -101,6 +101,8 @@ struct HomeView: View {
                 let mealToDelete = mealEntries[index]
                 modelContext.delete(mealToDelete)
             }
+            // 顯式保存刪除結果
+            try? modelContext.save()
         }
     }
     
@@ -114,6 +116,8 @@ struct HomeView: View {
             )
             newEntry.user = user
             modelContext.insert(newEntry)
+            // 顯式保存新增結果
+            try? modelContext.save()
         }
     }
 }
@@ -385,6 +389,8 @@ struct TodayLog: View {
     private func delete(_ entry: MealEntry) {
         withAnimation {
             modelContext.delete(entry)
+            // 顯式保存刪除結果
+            try? modelContext.save()
         }
     }
 }
@@ -404,30 +410,39 @@ struct LogRow: View {
                     .foregroundColor(.accentColor)
             }
             
+            // 左側：餐點名稱、時間、熱量 VStack
             VStack(alignment: .leading, spacing: 4) {
                 Text((entry.name ?? "").isEmpty ? timeText : (entry.name ?? ""))
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .lineLimit(2)
+                    .lineLimit(1)
                     .foregroundColor(.primary)
+                    .truncationMode(.tail)
                 
-                HStack {
-                    Text("\(timeText) • \(entry.calories) 卡路里")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                Text(timeText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                
+                Text("\(entry.calories) 大卡")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
             
             Spacer()
             
-            Text("\(entry.carbs)g")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Color.accentColor)
-                .cornerRadius(12)
+            // 右側：膠囊群組
+            if hasAnyMacro {
+                HStack(spacing: 8) {
+                    if entry.carbs > 0 { macroPill(value: entry.carbs, color: .carbsColor) }
+                    if entry.protein > 0 { macroPill(value: entry.protein, color: .proteinColor) }
+                    if entry.fat > 0 { macroPill(value: entry.fat, color: .fatColor) }
+                }
+                .layoutPriority(1)
+            }
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
@@ -451,6 +466,34 @@ struct LogRow: View {
         case 16..<22: return "sunset.fill"
         default:     return "moon.fill"
         }
+    }
+    
+    // 任何一項宏量營養素是否存在
+    private var hasAnyMacro: Bool { entry.carbs > 0 || entry.protein > 0 || entry.fat > 0 }
+    
+    // 三大營養膠囊：固定為 3 位數寬度，超過時縮放避免截斷
+    private func macroPill(value: Int, color: Color) -> some View {
+        ZStack {
+            // 以 3 位數等寬數字作為隱形佔位，鎖定膠囊寬度
+            Text("000")
+                .font(.caption)
+                .fontWeight(.bold)
+                .monospacedDigit()
+                .opacity(0)
+            
+            // 實際顯示的數值
+            Text("\(value)")
+                .font(.caption)
+                .fontWeight(.bold)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(color)
+        .cornerRadius(12)
     }
 }
 
