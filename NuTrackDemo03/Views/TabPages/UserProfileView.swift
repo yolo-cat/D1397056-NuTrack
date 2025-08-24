@@ -97,7 +97,7 @@ struct UserProfileView: View {
                     // 2. Componentized UI
                     headerView
                     if isFirstLogin { welcomeSection }
-                    userAvatarSection
+//                    userAvatarSection
                     weightInputSection
                     nutritionGoalsSection // Renamed from nutritionSlidersSection for clarity
                     totalCaloriesSection
@@ -200,8 +200,8 @@ struct UserProfileView: View {
         .cornerRadius(12)
     }
     
-    private var userAvatarSection: some View {
-        VStack(spacing: 12) {
+//    private var userAvatarSection: some View {
+//        VStack(spacing: 12) {
 //            Image(systemName: "person.circle.fill")
 //                .resizable()
 //                .scaledToFit()
@@ -212,8 +212,8 @@ struct UserProfileView: View {
 //                .font(.title)
 //                .fontWeight(.bold)
 //                .foregroundColor(.primary)
-        }
-    }
+//        }
+//    }
     
     private var weightInputSection: some View {
         VStack(alignment: .leading, spacing: 15) {
